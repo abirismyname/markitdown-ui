@@ -1,10 +1,28 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+private let celebrationMessages = [
+    "✨ Magic complete! ✨",
+    "🎉 Markdown perfection! 🎉",
+    "🚀 Converted to the moon! 🚀",
+    "⭐ Stellar conversion! ⭐",
+    "🎊 File transformation success! 🎊",
+    "💫 Converted with sparkles! 💫",
+    "🌟 Absolutely brilliant! 🌟",
+    "👏 Perfectly executed! 👏",
+    "🎯 Bullseye! 🎯",
+    "🧙 Markdown wizardry! 🧙",
+    "🎨 Beautifully converted! 🎨",
+    "🌈 Rainbow markdown! 🌈",
+    "💎 Gem-quality! 💎",
+    "🏆 Champion conversion! 🏆",
+]
+
 struct DropZoneView: View {
     @ObservedObject var conversionManager: ConversionManager
 
     @State private var isTargeted = false
+    @State private var celebrationMessage = ""
 
     var body: some View {
         ZStack {
@@ -63,7 +81,7 @@ struct DropZoneView: View {
     private var statusView: some View {
         switch conversionManager.state {
         case .idle:
-            Text("Ready")
+            Text("Ready to work magic ✨")
                 .foregroundStyle(Color.white.opacity(0.7))
                 .font(.system(size: 13))
         case let .converting(fileName):
@@ -75,24 +93,56 @@ struct DropZoneView: View {
             .foregroundStyle(.white)
             .font(.system(size: 13, weight: .medium))
         case let .success(outputURL):
-            HStack(spacing: 12) {
-                Text("Saved: \(outputURL.lastPathComponent)")
+            VStack(spacing: 8) {
+                Text(celebrationMessage)
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.green)
-                    .font(.system(size: 13, weight: .semibold))
-
-                Button("Reveal") {
-                    conversionManager.revealOutputInFinder()
+                
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("✓ Mission accomplished!")
+                            .foregroundStyle(.green)
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(outputURL.lastPathComponent)
+                            .foregroundStyle(.green.opacity(0.8))
+                            .font(.system(size: 11))
+                            .lineLimit(1)
+                    }
+                    
+                    Button("Reveal") {
+                        conversionManager.revealOutputInFinder()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.green)
+            }
+            .onAppear {
+                celebrationMessage = celebrationMessages.randomElement() ?? "🎉 Done! 🎉"
             }
         case let .failure(message):
-            Text(message)
-                .foregroundStyle(.red.opacity(0.92))
-                .font(.system(size: 12, weight: .medium))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 460)
+            VStack(spacing: 6) {
+                Text("Oops! 🤔")
+                    .foregroundStyle(.red)
+                    .font(.system(size: 13, weight: .bold))
+                Text(playfulErrorMessage(message))
+                    .foregroundStyle(.red.opacity(0.92))
+                    .font(.system(size: 11, weight: .medium))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 460)
+            }
         }
+    }
+    
+    private func playfulErrorMessage(_ original: String) -> String {
+        let lower = original.lowercased()
+        if lower.contains("path") {
+            return "CLI path got lost—check Preferences! 🔍"
+        } else if lower.contains("executable") {
+            return "CLI needs permission to run. Check Preferences! 🔐"
+        } else if lower.contains("not a valid") {
+            return "Hmm, that file format might not be supported. Try another! 📁"
+        }
+        return "Something went sideways. Try again? 😊"
     }
 
     private func loadFirstURL(from providers: [NSItemProvider]) -> Bool {

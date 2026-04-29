@@ -31,16 +31,16 @@ final class StatusBarController {
 
         switch state {
         case .idle:
-            button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkyMarkdown")
+            button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkyMarkdown - Your friendly markdown converter! 🎉")
         case .converting:
-            button.image = NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: "Converting")
+            button.image = NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: "Converting your file with markdown magic! ✨")
         case .success:
-            button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Success")
+            button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Success! File converted beautifully! 🎊")
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
                 self?.updateForState(.idle)
             }
         case .failure:
-            button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Failed")
+            button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Conversion encountered an issue. Check Preferences! 🔍")
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
                 self?.updateForState(.idle)
             }
@@ -51,7 +51,7 @@ final class StatusBarController {
         guard let button = statusItem.button else { return }
 
         button.title = ""
-        button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkyMarkdown")
+        button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkyMarkdown - Your friendly markdown converter! 🎉")
         button.imagePosition = .imageOnly
 
         let menu = NSMenu()

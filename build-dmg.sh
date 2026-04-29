@@ -146,6 +146,15 @@ ln -s /Applications "${DMG_TEMP_DIR}/Applications"
 # Create a background image directory (optional, creates DMG with background)
 mkdir -p "${DMG_TEMP_DIR}/.background"
 
+# Make the mounted DMG volume use the same icon as the app.
+cp "Sources/MarkitdownUI/Resources/AppIcon.icns" "${DMG_TEMP_DIR}/.VolumeIcon.icns"
+if command -v SetFile >/dev/null 2>&1; then
+	SetFile -a C "${DMG_TEMP_DIR}"
+	SetFile -a V "${DMG_TEMP_DIR}/.VolumeIcon.icns"
+else
+	echo "⚠️  SetFile not found; DMG custom volume icon may not be applied on this machine."
+fi
+
 # Create DMG using hdiutil
 hdiutil create \
 	-volname "MarkyMarkdown ${VERSION}" \
