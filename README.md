@@ -25,7 +25,7 @@ A native macOS menu bar application that provides a joyful, delightful interface
 
 ### From DMG (Recommended)
 
-1. Download the latest `MarkyMarkdown-*.dmg` file from [Releases](https://github.com/abirismyname/markitdown-ui/releases)
+1. Download the latest `MarkyMarkdown-*.dmg` file from [Releases](https://github.com/abirismyname/markymarkdown/releases)
 2. Open the DMG file
 3. Drag the `MarkyMarkdown` app to the `Applications` folder
 4. Eject the DMG
@@ -37,7 +37,7 @@ The app will appear as a menu bar item and remain running in the background. No 
 
 ```bash
 # Clone or navigate to the repository
-cd /path/to/markitdown-ui
+cd /path/to/markymarkdown
 
 # Build the DMG
 ./build-dmg.sh
@@ -100,7 +100,7 @@ For the full list of supported formats, see [MarkItDown documentation](https://g
 ## Project Structure
 
 ```
-markitdown-ui/
+markymarkdown/
 ├── Sources/MarkitdownUI/
 │   ├── AppMain.swift                    # App entry point
 │   ├── AppDelegate.swift                # Application lifecycle

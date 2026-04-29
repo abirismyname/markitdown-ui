@@ -100,7 +100,7 @@ cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << 'EOF'
 	<key>CFBundleExecutable</key>
 	<string>MarkyMarkdown</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.markitdown-ui.app</string>
+	<string>com.markymarkdown.app</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

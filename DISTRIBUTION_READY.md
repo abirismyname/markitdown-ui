@@ -50,7 +50,7 @@ https://your-domain.com/downloads/MarkItDown-1.0.0.dmg
 For future releases, consider:
 ```bash
 # Create a tap for homebrew
-# Users can then: brew install your-tap/markitdown-ui
+# Users can then: brew install your-tap/markymarkdown
 ```
 
 ## Building Updates
@@ -77,7 +77,7 @@ When you have updates:
 - **Language**: Swift 5.9+
 - **Framework**: SwiftUI + AppKit
 - **Minimum macOS**: 13.0
-- **Bundle ID**: com.markitdown-ui.app
+- **Bundle ID**: com.markymarkdown.app
 - **Type**: Menu bar application (LSUIElement = true)
 
 ### Bundled Components

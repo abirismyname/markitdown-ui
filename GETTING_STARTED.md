@@ -16,7 +16,7 @@
 
 ### Configuration
 - `Info.plist` - App configuration with LSUIElement=true (menu bar app)
-- Bundle ID: `com.markitdown-ui.app`
+- Bundle ID: `com.markymarkdown.app`
 
 ### Code Structure
 ```

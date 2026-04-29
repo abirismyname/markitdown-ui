@@ -33,8 +33,8 @@ This guide explains how to distribute the MarkItDown app to users.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/markitdown-ui.git
-cd markitdown-ui
+git clone https://github.com/yourusername/markymarkdown.git
+cd markymarkdown
 
 # Build the DMG (includes bundled MarkItDown CLI)
 ./build-dmg.sh
