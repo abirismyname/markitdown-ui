@@ -1,6 +1,6 @@
-# MarkItDown UI
+# MarkyMarkdown
 
-A native macOS menu bar application that provides a simple, modern interface for converting documents to Markdown using [MarkItDown](https://github.com/microsoft/markitdown).
+A native macOS menu bar application that provides a joyful, delightful interface for converting documents to Markdown using [MarkItDown](https://github.com/microsoft/markitdown).
 
 ## System Requirements
 
@@ -12,25 +12,26 @@ A native macOS menu bar application that provides a simple, modern interface for
 
 ## Features
 
-- **Menu Bar Integration**: Persistent menu bar item with drag-and-drop support
-- **Main Drop Window**: Minimal, modern interface for dragging files to convert
-- **Automatic File Generation**: Converted Markdown files are created in the same folder as the original with `.md` extension
-- **Collision Handling**: Automatically creates `filename (1).md`, `filename (2).md`, etc. if the target file already exists
-- **Bundled CLI**: MarkItDown CLI is included in the app—no separate installation required
-- **Preferences**: Customize CLI path and output options (keep data URIs)
-- **File Picker Fallback**: Use "Convert File…" menu option if drag-and-drop is not convenient
+- **🎉 Menu Bar Integration**: Persistent menu bar item with drag-and-drop support
+- **✨ Celebratory Messages**: 14 randomized success messages celebrate every conversion
+- **🎊 Milestone Tracking**: Special achievements unlocked at 10, 50, and 100 conversions
+- **🤔 Playful Error Guidance**: Context-aware, encouraging messages when issues occur
+- **💾 Smart File Handling**: Markdown files generated in the same folder with automatic collision handling
+- **🔥 Zero Prerequisites**: Bundled MarkItDown CLI with complete Python 3.11 runtime—nothing to install
+- **⚙️ Preferences**: Customize CLI path and output options (keep data URIs)
+- **📁 File Picker Fallback**: Use "Convert File…" menu option for convenient file selection
 
 ## Installation
 
 ### From DMG (Recommended)
 
-1. Download the latest `MarkItDown-*.dmg` file from the releases
+1. Download the latest `MarkyMarkdown-*.dmg` file from [Releases](https://github.com/abirismyname/markitdown-ui/releases)
 2. Open the DMG file
-3. Drag the `MarkItDown` app to the `Applications` folder
+3. Drag the `MarkyMarkdown` app to the `Applications` folder
 4. Eject the DMG
-5. Launch the app from Applications or Spotlight (⌘+Space, type "MarkItDown")
+5. Launch the app from Applications or Spotlight (⌘+Space, type "MarkyMarkdown")
 
-The app will appear as a menu bar item (document icon) and will remain running in the background.
+The app will appear as a menu bar item and remain running in the background. No configuration needed!
 
 ### From Source
 
@@ -73,6 +74,16 @@ Click the menu bar icon and select "Preferences…" to customize:
 - **MarkItDown CLI Path**: Override the bundled CLI with your own (if needed)
 - **Keep Data URIs**: Preserve embedded images in output (rather than stripping them)
 
+## Milestone Celebrations
+
+Every conversion counts! Unlock special achievements:
+
+- **10 conversions**: 🎊 "10 files converted! You're on fire! 🔥"
+- **50 conversions**: 🏆 "50 conversions! You're a Markdown master! 👑"
+- **100 conversions**: 👏 "100 files! You deserve a medal! 🥇"
+
+Your conversion count persists across sessions—keep converting to unlock achievements!
+
 ## Supported File Formats
 
 MarkItDown supports converting the following file formats to Markdown:
@@ -114,7 +125,7 @@ markitdown-ui/
 └── README.md                            # This file
 ```
 
-## Building
+## Building & Development
 
 ### Development Build
 
@@ -126,21 +137,31 @@ swift build
 swift run MarkitdownUI
 ```
 
-### Release Build (DMG)
-
-```bash
-# Create a distributable DMG
-./build-dmg.sh
-
-# Output will be at: .build/MarkItDown-1.0.0.dmg
-```
-
 ### Testing
 
 ```bash
 # Run the test suite
 swift test
 ```
+
+### Release Build (DMG)
+
+```bash
+# Create a distributable DMG (includes bundled CLI)
+./build-dmg.sh
+
+# Output will be at: .build/MarkyMarkdown-1.0.0.dmg
+```
+
+## Continuous Integration
+
+This repository uses GitHub Actions for automated building, testing, and releasing:
+
+- **Build Workflow** (`.github/workflows/build.yml`): Compiles the app on every push to main
+- **Test Workflow** (`.github/workflows/test.yml`): Runs Swift tests on every PR
+- **Release Workflow** (`.github/workflows/release.yml`): Creates releases and uploads DMG when version tags are pushed
+
+All workflows run on macOS 14+ with Apple Silicon support.
 
 ## Architecture
 

@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build App
+    runs-on: macos-14
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: '5.10'
+    
+    - name: Build debug version
+      run: swift build --configuration debug
+    
+    - name: Build release version
+      run: swift build --configuration release
+    
+    - name: Verify app structure
+      run: |
+        ls -la .build/release/MarkitdownUI
+        file .build/release/MarkitdownUI

@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: macos-14
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: '5.10'
+    
+    - name: Detect Python version
+      run: |
+        if command -v python3.12 &> /dev/null; then
+          echo "PYTHON_CMD=python3.12" >> $GITHUB_ENV
+        elif command -v python3.11 &> /dev/null; then
+          echo "PYTHON_CMD=python3.11" >> $GITHUB_ENV
+        elif command -v python3.10 &> /dev/null; then
+          echo "PYTHON_CMD=python3.10" >> $GITHUB_ENV
+        else
+          echo "Error: Python 3.10+ is required"
+          exit 1
+        fi
+    
+    - name: Build DMG
+      run: bash build-dmg.sh
+      env:
+        PYTHON_CMD: ${{ env.PYTHON_CMD }}
+    
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: MarkyMarkdown ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          # MarkyMarkdown ${{ steps.get_version.outputs.VERSION }}
+          
+          ## Features
+          - 🎉 Menu bar integration with drag-and-drop support
+          - ✨ Celebratory messages for every conversion
+          - 🎊 Milestone tracking at 10, 50, and 100 conversions
+          - 🤔 Playful, context-aware error messages
+          - 🔥 Zero prerequisites—MarkItDown CLI bundled in the app
+          
+          ## System Requirements
+          - macOS 13.0 or later
+          - Apple Silicon (arm64)
+          
+          ## Installation
+          1. Download `MarkyMarkdown-${{ steps.get_version.outputs.VERSION }}.dmg`
+          2. Open the DMG and drag the app to Applications
+          3. Launch from Applications or Spotlight
+          
+          No additional setup or dependencies required!
+        draft: false
+        prerelease: false
+    
+    - name: Upload DMG to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: .build/MarkyMarkdown-1.0.0.dmg
+        asset_name: MarkyMarkdown-${{ steps.get_version.outputs.VERSION }}.dmg
+        asset_content_type: application/octet-stream
+    
+    - name: Publish Release
+      run: echo "Release published to GitHub with DMG asset"
