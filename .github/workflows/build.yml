@@ -14,10 +14,10 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v4
     
     - name: Cache Swift build artifacts
-      uses: actions/cache@v5
+      uses: actions/cache@v4
       with:
         path: .build
         key: ${{ runner.os }}-swift-${{ hashFiles('**/Package.swift') }}
