@@ -5,18 +5,24 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     name: Build and Release
-    runs-on: macos-14
+    runs-on: macos-15
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Swift
-      uses: swift-actions/setup-swift@v1
+    - name: Cache Swift build artifacts
+      uses: actions/cache@v4
       with:
-        swift-version: '5.10'
+        path: .build
+        key: ${{ runner.os }}-swift-dmg-${{ hashFiles('**/Package.swift') }}
+        restore-keys: |
+          ${{ runner.os }}-swift-dmg-
     
     - name: Detect Python version
       run: |
@@ -40,14 +46,10 @@ jobs:
       id: get_version
       run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
     
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: MarkyMarkdown ${{ steps.get_version.outputs.VERSION }}
+        files: .build/MarkyMarkdown-1.0.0.dmg
         body: |
           # MarkyMarkdown ${{ steps.get_version.outputs.VERSION }}
           
@@ -70,16 +72,5 @@ jobs:
           No additional setup or dependencies required!
         draft: false
         prerelease: false
-    
-    - name: Upload DMG to Release
-      uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: .build/MarkyMarkdown-1.0.0.dmg
-        asset_name: MarkyMarkdown-${{ steps.get_version.outputs.VERSION }}.dmg
-        asset_content_type: application/octet-stream
-    
-    - name: Publish Release
-      run: echo "Release published to GitHub with DMG asset"

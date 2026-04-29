@@ -7,15 +7,18 @@ on:
 jobs:
   build:
     name: Build App
-    runs-on: macos-14
+    runs-on: macos-15
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Swift
-      uses: swift-actions/setup-swift@v1
+    - name: Cache Swift build artifacts
+      uses: actions/cache@v4
       with:
-        swift-version: '5.10'
+        path: .build
+        key: ${{ runner.os }}-swift-${{ hashFiles('**/Package.swift') }}
+        restore-keys: |
+          ${{ runner.os }}-swift-
     
     - name: Build debug version
       run: swift build --configuration debug
@@ -27,3 +30,4 @@ jobs:
       run: |
         ls -la .build/release/MarkitdownUI
         file .build/release/MarkitdownUI
+        echo "✅ Build verification passed"
