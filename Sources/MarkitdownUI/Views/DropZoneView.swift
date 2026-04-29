@@ -16,7 +16,7 @@ struct DropZoneView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 20) {
-                Text("MarkItDown")
+                Text("MarkyMarkdown")
                     .font(.system(size: 28, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
 

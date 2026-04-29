@@ -31,7 +31,7 @@ final class StatusBarController {
 
         switch state {
         case .idle:
-            button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkItDown")
+            button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkyMarkdown")
         case .converting:
             button.image = NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: "Converting")
         case .success:
@@ -51,7 +51,7 @@ final class StatusBarController {
         guard let button = statusItem.button else { return }
 
         button.title = ""
-        button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkItDown")
+        button.image = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "MarkyMarkdown")
         button.imagePosition = .imageOnly
 
         let menu = NSMenu()

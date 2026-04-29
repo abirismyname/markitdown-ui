@@ -2,11 +2,11 @@
 set -e
 
 # Configuration
-APP_NAME="MarkItDown"
+APP_NAME="MarkyMarkdown"
 VERSION="1.0.0"
 BUILD_DIR=".build"
-APP_BUNDLE_PATH=".build/MarkItDown.app"
-DMG_OUTPUT=".build/MarkItDown-${VERSION}.dmg"
+APP_BUNDLE_PATH=".build/MarkyMarkdown.app"
+DMG_OUTPUT=".build/MarkyMarkdown-${VERSION}.dmg"
 EXECUTABLE_PATH="${BUILD_DIR}/release/MarkitdownUI"
 MARKITDOWN_STANDALONE_DIR="${BUILD_DIR}/markitdown-standalone"
 MARKITDOWN_VENV_DIR="${MARKITDOWN_STANDALONE_DIR}/venv"
@@ -25,7 +25,7 @@ else
 	exit 1
 fi
 
-echo "📦 Building MarkItDown macOS app..."
+echo "📦 Building MarkyMarkdown macOS app..."
 
 # Clean previous builds
 rm -rf "${APP_BUNDLE_PATH}" "${DMG_OUTPUT}" "${MARKITDOWN_STANDALONE_DIR}"
@@ -98,13 +98,13 @@ cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << 'EOF'
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>MarkItDown</string>
+	<string>MarkyMarkdown</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.markitdown-ui.app</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>MarkItDown</string>
+	<string>MarkyMarkdown</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -148,7 +148,7 @@ mkdir -p "${DMG_TEMP_DIR}/.background"
 
 # Create DMG using hdiutil
 hdiutil create \
-    -volname "MarkItDown ${VERSION}" \
+	-volname "MarkyMarkdown ${VERSION}" \
     -srcfolder "${DMG_TEMP_DIR}" \
     -ov \
     -format UDZO \
@@ -165,4 +165,4 @@ echo "  DMG Distribution: ${DMG_OUTPUT}"
 echo "  Version: ${VERSION}"
 echo ""
 echo "🚀 To distribute, share: ${DMG_OUTPUT}"
-echo "📖 Users can drag MarkItDown.app to Applications folder from the DMG"
+echo "📖 Users can drag MarkyMarkdown.app to Applications folder from the DMG"

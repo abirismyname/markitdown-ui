@@ -10,7 +10,7 @@ final class DropWindowController {
         let hostingController = NSHostingController(rootView: contentView)
 
         let window = NSWindow(contentViewController: hostingController)
-        window.title = "MarkItDown"
+        window.title = "MarkyMarkdown"
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.setContentSize(NSSize(width: 560, height: 420))
         window.isReleasedWhenClosed = false
