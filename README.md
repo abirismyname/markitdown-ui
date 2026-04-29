@@ -42,27 +42,27 @@ cd /path/to/markitdown-ui
 # Build the DMG
 ./build-dmg.sh
 
-# The DMG will be created at: .build/MarkItDown-1.0.0.dmg
+# The DMG will be created at: .build/MarkyMarkdown-1.0.0.dmg
 ```
 
 ## Usage
 
 ### Via Drop Window
 
-1. Click the MarkItDown menu bar icon and select "Open Drop Window"
+1. Click the MarkyMarkdown menu bar icon and select "Open Drop Window"
 2. Drag a file onto the drop zone
 3. The Markdown file will be created next to the original
 4. Click "Reveal" to open in Finder
 
 ### Via Menu Bar Drag-and-Drop
 
-1. Drag a file directly onto the MarkItDown menu bar icon
+1. Drag a file directly onto the MarkyMarkdown menu bar icon
 2. Conversion happens automatically
 3. Status icon updates to show success/failure
 
 ### Via File Picker
 
-1. Click the MarkItDown menu bar icon
+1. Click the MarkyMarkdown menu bar icon
 2. Select "Convert File…"
 3. Choose a file to convert
 4. Markdown file is created in the same folder
