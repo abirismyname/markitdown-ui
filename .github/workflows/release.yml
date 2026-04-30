@@ -46,14 +46,17 @@ jobs:
     
     - name: Get version from tag
       id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      run: |
+        TAG="${GITHUB_REF#refs/tags/}"
+        echo "TAG=${TAG}" >> $GITHUB_OUTPUT
+        echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
     
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v2
       with:
-        files: .build/MarkyMarkdown-1.0.0.dmg
+        files: .build/MarkyMarkdown-*.dmg
         body: |
-          # MarkyMarkdown ${{ steps.get_version.outputs.VERSION }}
+          # MarkyMarkdown ${{ steps.get_version.outputs.TAG }}
           
           ## Features
           - 🎉 Menu bar integration with drag-and-drop support
