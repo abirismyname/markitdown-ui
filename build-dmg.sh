@@ -11,6 +11,10 @@ DMG_RW_OUTPUT=".build/MarkyMarkdown-${VERSION}-rw.dmg"
 EXECUTABLE_PATH="${BUILD_DIR}/release/MarkitdownUI"
 MARKITDOWN_STANDALONE_DIR="${BUILD_DIR}/markitdown-standalone"
 MARKITDOWN_VENV_DIR="${MARKITDOWN_STANDALONE_DIR}/venv"
+
+# Code Signing Configuration
+SIGNING_IDENTITY="Apple Development: Abir Majumdar (B4994FKL79)"
+ENABLE_CODE_SIGNING=true
 MARKITDOWN_ENTRY_SCRIPT="${MARKITDOWN_STANDALONE_DIR}/markitdown_entry.py"
 MARKITDOWN_DIST_BINARY="${MARKITDOWN_STANDALONE_DIR}/dist/markitdown/markitdown"
 INSTALLER_BACKGROUND_SRC="installer-background.png"
@@ -131,6 +135,42 @@ cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << 'EOF'
 EOF
 
 echo "✅ App bundle created at: ${APP_BUNDLE_PATH}"
+
+# Code Signing
+if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
+	echo "🔐 Code signing app bundle..."
+	
+	# Sign the bundled MarkItDown CLI binary first
+	if [[ -f "${APP_BUNDLE_PATH}/Contents/Resources/markitdown/markitdown" ]]; then
+		echo "  Signing MarkItDown CLI binary..."
+		codesign -s "${SIGNING_IDENTITY}" --force \
+			"${APP_BUNDLE_PATH}/Contents/Resources/markitdown/markitdown" || {
+			echo "⚠️  Warning: Could not sign MarkItDown binary. Verify certificate is installed."
+		}
+	fi
+	
+	# Sign the entire app bundle with deep signing
+	echo "  Signing app bundle (deep)..."
+	codesign -s "${SIGNING_IDENTITY}" --deep --force "${APP_BUNDLE_PATH}" || {
+		echo "❌ Code signing failed. Verify the certificate is installed:"
+		echo "   security find-identity -v -p codesigning"
+		exit 1
+	}
+	
+	# Verify the signature
+	echo "  Verifying code signature..."
+	if codesign -v "${APP_BUNDLE_PATH}" 2>&1; then
+		echo "✅ Code signature verified successfully"
+		
+		# Display signature details
+		echo "  Signature details:"
+		codesign -d -r - "${APP_BUNDLE_PATH}" 2>&1 | head -3
+	else
+		echo "⚠️  Code signature verification failed. The app may not launch properly."
+	fi
+else
+	echo "⚠️  Code signing disabled (ENABLE_CODE_SIGNING not set)"
+fi
 
 # Create DMG
 echo "💿 Creating DMG distribution..."
