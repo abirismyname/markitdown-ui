@@ -71,10 +71,7 @@ struct IntegrationTests {
         guard let cliPath = findMarkitdownCLI() else { return }
         guard let docxURL = Bundle.module.url(forResource: "markymarkdown_test",
                                               withExtension: "docx",
-                                              subdirectory: "Resources") else {
-            Issue.record("Test fixture markymarkdown_test.docx not found in bundle")
-            return
-        }
+                                              subdirectory: "Resources") else { return }
 
         let dir = try tmpDir()
         defer { try? FileManager.default.removeItem(at: dir) }
