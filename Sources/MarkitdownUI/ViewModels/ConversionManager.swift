@@ -59,7 +59,7 @@ final class ConversionManager: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([outputURL])
     }
 
-    private func checkMilestone() {
+    func checkMilestone() {
         conversionCount += 1
         
         switch conversionCount {

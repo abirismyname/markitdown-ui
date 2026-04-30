@@ -24,6 +24,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-swift-
     
+    - name: Install MarkItDown CLI for integration tests
+      run: |
+        python3 -m venv .venv
+        .venv/bin/pip install --quiet "markitdown[all]"
+        echo "${{ github.workspace }}/.venv/bin" >> "$GITHUB_PATH"
+        echo "markitdown path: ${{ github.workspace }}/.venv/bin/markitdown"
+    
     - name: Run tests
       run: swift test --verbose
     

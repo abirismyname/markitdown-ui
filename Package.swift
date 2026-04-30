@@ -21,7 +21,11 @@ let package = Package(
         ),
         .testTarget(
             name: "MarkitdownUITests",
-            dependencies: ["MarkitdownUI"]
+            dependencies: ["MarkitdownUI"],
+            resources: [
+                .copy("Resources/markymarkdown_test.docx"),
+                .copy("Resources/markymarkdown_test.docx.md")
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]

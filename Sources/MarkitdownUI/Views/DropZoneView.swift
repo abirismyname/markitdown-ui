@@ -18,6 +18,18 @@ private let celebrationMessages = [
     "🏆 Champion conversion! 🏆",
 ]
 
+func playfulErrorMessage(_ original: String) -> String {
+    let lower = original.lowercased()
+    if lower.contains("path") {
+        return "CLI path got lost—check Preferences! 🔍"
+    } else if lower.contains("executable") {
+        return "CLI needs permission to run. Check Preferences! 🔐"
+    } else if lower.contains("not a valid") {
+        return "Hmm, that file format might not be supported. Try another! 📁"
+    }
+    return "Something went sideways. Try again? 😊"
+}
+
 struct DropZoneView: View {
     @ObservedObject var conversionManager: ConversionManager
 
@@ -133,18 +145,6 @@ struct DropZoneView: View {
         }
     }
     
-    private func playfulErrorMessage(_ original: String) -> String {
-        let lower = original.lowercased()
-        if lower.contains("path") {
-            return "CLI path got lost—check Preferences! 🔍"
-        } else if lower.contains("executable") {
-            return "CLI needs permission to run. Check Preferences! 🔐"
-        } else if lower.contains("not a valid") {
-            return "Hmm, that file format might not be supported. Try another! 📁"
-        }
-        return "Something went sideways. Try again? 😊"
-    }
-
     private func loadFirstURL(from providers: [NSItemProvider]) -> Bool {
         guard let provider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) }) else {
             return false
