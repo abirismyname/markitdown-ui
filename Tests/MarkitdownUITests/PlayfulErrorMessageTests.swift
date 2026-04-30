@@ -29,16 +29,13 @@ struct PlayfulErrorMessageTests {
     @Test("unknown error returns fallback message")
     func unknownError() {
         let result = playfulErrorMessage("An unexpected error occurred.")
-        #expect(!result.isEmpty)
-        // Should not match the path/executable/format branches
-        let lower = result.lowercased()
-        #expect(!lower.contains("path") || lower.contains("sideways") || lower.contains("try again"))
+        #expect(result == "Something went sideways. Try again? 😊")
     }
 
     @Test("empty string returns fallback message")
     func emptyStringFallback() {
         let result = playfulErrorMessage("")
-        #expect(!result.isEmpty)
+        #expect(result == "Something went sideways. Try again? 😊")
     }
 
     @Test("case insensitive matching for PATH")
