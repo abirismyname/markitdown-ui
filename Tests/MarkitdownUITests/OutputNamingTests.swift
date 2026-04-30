@@ -37,7 +37,7 @@ struct OutputNamingTests {
 
         let input = dir.appendingPathComponent("notes.docx")
         let output = service().makeUniqueOutputURL(for: input)
-        #expect(output.deletingLastPathComponent() == dir)
+        #expect(output.deletingLastPathComponent().path == dir.path)
     }
 
     @Test("output URL for file without extension appends .md")
