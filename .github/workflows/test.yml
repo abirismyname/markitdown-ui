@@ -24,6 +24,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-swift-
     
+    - name: Install MarkItDown CLI for integration tests
+      run: |
+        pip3 install --break-system-packages "markitdown[all]" || pip3 install "markitdown[all]"
+        echo "markitdown path: $(which markitdown || echo 'not found in PATH')"
+    
     - name: Run tests
       run: swift test --verbose
     

@@ -57,7 +57,7 @@ struct MarkitdownConversionService {
         return ConversionResult(outputURL: outputURL)
     }
 
-    private func makeUniqueOutputURL(for inputURL: URL) -> URL {
+    func makeUniqueOutputURL(for inputURL: URL) -> URL {
         let folder = inputURL.deletingLastPathComponent()
         let fileName = inputURL.lastPathComponent  // Keep original filename with extension
 

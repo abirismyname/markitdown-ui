@@ -1,8 +1,11 @@
 import Testing
 @testable import MarkitdownUI
 
-@Test func example() async throws {
-    // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-    // Swift Testing Documentation
-    // https://developer.apple.com/documentation/testing
-}
+// See individual test files for all test suites:
+//   ConversionStateTests.swift      — ConversionState enum
+//   ConversionErrorTests.swift      — ConversionError descriptions
+//   OutputNamingTests.swift         — makeUniqueOutputURL collision handling
+//   AppSettingsStoreTests.swift     — AppSettingsStore.validationError()
+//   ConversionManagerTests.swift    — ConversionManager state machine & milestones
+//   PlayfulErrorMessageTests.swift  — playfulErrorMessage keyword dispatch
+//   IntegrationTests.swift          — CLI conversion + regression against golden file
