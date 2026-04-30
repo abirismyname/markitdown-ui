@@ -151,15 +151,15 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 	# Sign the bundled MarkItDown CLI binary first
 	if [[ -f "${APP_BUNDLE_PATH}/Contents/Resources/markitdown/markitdown" ]]; then
 		echo "  Signing MarkItDown CLI binary..."
-		codesign -s "${SIGNING_IDENTITY}" --force \
+		codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
 			"${APP_BUNDLE_PATH}/Contents/Resources/markitdown/markitdown" || {
 			echo "⚠️  Warning: Could not sign MarkItDown binary. Verify certificate is installed."
 		}
 	fi
 	
-	# Sign the entire app bundle with deep signing
+	# Sign the entire app bundle with deep signing and hardened runtime (required for notarization)
 	echo "  Signing app bundle (deep)..."
-	codesign -s "${SIGNING_IDENTITY}" --deep --force "${APP_BUNDLE_PATH}" || {
+	codesign -s "${SIGNING_IDENTITY}" --deep --force --options runtime "${APP_BUNDLE_PATH}" || {
 		echo "⚠️  App bundle signing failed. The certificate may not be installed."
 		echo "   Run: security find-identity -v -p codesigning"
 	}
