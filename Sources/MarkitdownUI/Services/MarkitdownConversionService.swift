@@ -4,7 +4,7 @@ struct ConversionResult {
     let outputURL: URL
 }
 
-enum ConversionError: LocalizedError {
+enum ConversionError: LocalizedError, Equatable {
     case invalidInput
     case processFailed(code: Int32, stderr: String)
 
