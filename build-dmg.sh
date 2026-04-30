@@ -13,7 +13,8 @@ MARKITDOWN_STANDALONE_DIR="${BUILD_DIR}/markitdown-standalone"
 MARKITDOWN_VENV_DIR="${MARKITDOWN_STANDALONE_DIR}/venv"
 
 # Code Signing Configuration
-SIGNING_IDENTITY="Apple Development: Abir Majumdar (B4994FKL79)"
+# Prefer the value injected by CI (via $SIGNING_IDENTITY secret) and fall back to the local default.
+SIGNING_IDENTITY="${SIGNING_IDENTITY:-Apple Development: Abir Majumdar (B4994FKL79)}"
 # Auto-detect whether the signing certificate is available in the local keychain.
 # CI environments (GitHub Actions) do not have the certificate, so signing is skipped gracefully.
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "${SIGNING_IDENTITY}"; then
