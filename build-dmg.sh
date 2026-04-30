@@ -3,15 +3,18 @@ set -e
 
 # Configuration
 APP_NAME="MarkyMarkdown"
-VERSION="1.0.0"
+VERSION="1.1.0"
 BUILD_DIR=".build"
 APP_BUNDLE_PATH=".build/MarkyMarkdown.app"
 DMG_OUTPUT=".build/MarkyMarkdown-${VERSION}.dmg"
+DMG_RW_OUTPUT=".build/MarkyMarkdown-${VERSION}-rw.dmg"
 EXECUTABLE_PATH="${BUILD_DIR}/release/MarkitdownUI"
 MARKITDOWN_STANDALONE_DIR="${BUILD_DIR}/markitdown-standalone"
 MARKITDOWN_VENV_DIR="${MARKITDOWN_STANDALONE_DIR}/venv"
 MARKITDOWN_ENTRY_SCRIPT="${MARKITDOWN_STANDALONE_DIR}/markitdown_entry.py"
 MARKITDOWN_DIST_BINARY="${MARKITDOWN_STANDALONE_DIR}/dist/markitdown/markitdown"
+INSTALLER_BACKGROUND_SRC="installer-background.png"
+INSTALLER_BACKGROUND_NAME="installer-background.png"
 
 if command -v python3.12 >/dev/null 2>&1; then
 	PYTHON_BIN="$(command -v python3.12)"
@@ -28,7 +31,7 @@ fi
 echo "📦 Building MarkyMarkdown macOS app..."
 
 # Clean previous builds
-rm -rf "${APP_BUNDLE_PATH}" "${DMG_OUTPUT}" "${MARKITDOWN_STANDALONE_DIR}"
+rm -rf "${APP_BUNDLE_PATH}" "${DMG_OUTPUT}" "${DMG_RW_OUTPUT}" "${MARKITDOWN_STANDALONE_DIR}"
 
 # Build a standalone MarkItDown binary so end users do not need Python or pipx.
 echo "🐍 Building standalone MarkItDown CLI..."
@@ -36,7 +39,7 @@ mkdir -p "${MARKITDOWN_STANDALONE_DIR}"
 "${PYTHON_BIN}" -m venv "${MARKITDOWN_VENV_DIR}"
 "${MARKITDOWN_VENV_DIR}/bin/python" -m pip install --upgrade pip setuptools wheel
 "${MARKITDOWN_VENV_DIR}/bin/python" -m pip install \
-	"markitdown[docx,pdf,pptx,xlsx] @ git+https://github.com/microsoft/markitdown.git#subdirectory=packages/markitdown" \
+	"markitdown[docx,pdf,pptx,xlsx,html,uri] @ git+https://github.com/microsoft/markitdown.git#subdirectory=packages/markitdown" \
 	pyinstaller
 
 cat > "${MARKITDOWN_ENTRY_SCRIPT}" << 'EOF'
@@ -108,7 +111,7 @@ cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << 'EOF'
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>1.1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>CFBundleIconFile</key>
@@ -146,6 +149,12 @@ ln -s /Applications "${DMG_TEMP_DIR}/Applications"
 # Create a background image directory (optional, creates DMG with background)
 mkdir -p "${DMG_TEMP_DIR}/.background"
 
+if [[ ! -f "${INSTALLER_BACKGROUND_SRC}" ]]; then
+	echo "❌ ${INSTALLER_BACKGROUND_SRC} not found. Place the 700x440 PNG in the repo root and re-run."
+	exit 1
+fi
+cp "${INSTALLER_BACKGROUND_SRC}" "${DMG_TEMP_DIR}/.background/${INSTALLER_BACKGROUND_NAME}"
+
 # Make the mounted DMG volume use the same icon as the app.
 cp "Sources/MarkitdownUI/Resources/AppIcon.icns" "${DMG_TEMP_DIR}/.VolumeIcon.icns"
 if command -v SetFile >/dev/null 2>&1; then
@@ -155,16 +164,72 @@ else
 	echo "⚠️  SetFile not found; DMG custom volume icon may not be applied on this machine."
 fi
 
-# Create DMG using hdiutil
+
+# Create a writable DMG first so Finder metadata (background + icon layout) can be set.
+DMG_VOLUME_NAME="MarkyMarkdown ${VERSION}"
 hdiutil create \
-	-volname "MarkyMarkdown ${VERSION}" \
-    -srcfolder "${DMG_TEMP_DIR}" \
-    -ov \
-    -format UDZO \
-    "${DMG_OUTPUT}"
+	-volname "${DMG_VOLUME_NAME}" \
+	-srcfolder "${DMG_TEMP_DIR}" \
+	-ov \
+	-format UDRW \
+	"${DMG_RW_OUTPUT}"
+
+ATTACH_OUTPUT="$(hdiutil attach -readwrite -noverify -noautoopen "${DMG_RW_OUTPUT}")"
+DMG_MOUNT_POINT="$(echo "${ATTACH_OUTPUT}" | awk 'match($0,/\/Volumes\/.*/) { print substr($0, RSTART); exit }')"
+
+if [[ -n "${DMG_MOUNT_POINT}" && -d "${DMG_MOUNT_POINT}" ]]; then
+	if command -v SetFile >/dev/null 2>&1; then
+		SetFile -a C "${DMG_MOUNT_POINT}" || true
+		SetFile -a V "${DMG_MOUNT_POINT}/.VolumeIcon.icns" || true
+	fi
+
+	if [[ -f "${DMG_MOUNT_POINT}/.background/${INSTALLER_BACKGROUND_NAME}" ]]; then
+		if ! osascript <<EOF
+tell application "Finder"
+	tell disk "${DMG_VOLUME_NAME}"
+		open
+		set current view of container window to icon view
+		set toolbar visible of container window to false
+		set statusbar visible of container window to false
+		-- Window bounds sized exactly to the 700x440 installer-background.png.
+		-- Formula: {left, top, left+700, top+440} = {120, 120, 820, 560}
+		set the bounds of container window to {120, 120, 820, 560}
+		set viewOptions to the icon view options of container window
+		set arrangement of viewOptions to not arranged
+		set icon size of viewOptions to 96
+		set text size of viewOptions to 13
+		set background picture of viewOptions to file ".background:${INSTALLER_BACKGROUND_NAME}"
+		-- Icon positions are Finder icon-center coordinates within the 700x440 canvas.
+		-- App icon centred in the left drop zone; Applications alias in the right drop zone.
+		set position of item "${APP_NAME}.app" of container window to {200, 260}
+		set position of item "Applications" of container window to {500, 260}
+		close
+		open
+		update without registering applications
+		delay 1
+	end tell
+end tell
+EOF
+		then
+			echo "⚠️  Finder metadata step timed out; continuing DMG build without persisted window layout/background settings."
+		fi
+	fi
+
+	if command -v bless >/dev/null 2>&1; then
+		bless --folder "${DMG_MOUNT_POINT}" --openfolder "${DMG_MOUNT_POINT}" || true
+	fi
+
+	hdiutil detach "${DMG_MOUNT_POINT}" -quiet
+else
+	echo "⚠️  Could not find mounted DMG path to set background metadata."
+fi
+
+# Convert writable DMG to compressed distribution image.
+hdiutil convert "${DMG_RW_OUTPUT}" -format UDZO -o "${DMG_OUTPUT}" -ov
 
 # Clean up temp directory
 rm -rf "${DMG_TEMP_DIR}"
+rm -f "${DMG_RW_OUTPUT}"
 
 echo "✅ DMG created successfully: ${DMG_OUTPUT}"
 echo ""
