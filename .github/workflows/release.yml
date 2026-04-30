@@ -99,6 +99,10 @@ jobs:
 
         DMG_PATH=(.build/MarkyMarkdown-*.dmg)
         DMG_PATH="${DMG_PATH[0]}"
+        if [[ ! -f "${DMG_PATH}" ]]; then
+          echo "❌ DMG not found at ${DMG_PATH} — cannot notarize."
+          exit 1
+        fi
         echo "🔏 Submitting ${DMG_PATH} for notarization..."
         xcrun notarytool submit "${DMG_PATH}" \
           --apple-id "$NOTARIZATION_APPLE_ID" \

@@ -38,7 +38,7 @@ A native macOS menu bar application that provides a joyful, delightful interface
 
 The app will appear as a menu bar item and remain running in the background. No configuration needed!
 
-> **Note**: The quarantine removal step (step 4) is needed because macOS flags downloaded apps. We sign the app with a development certificate—this is the standard practice for open source macOS utilities.
+> **Note**: The quarantine removal step above is only needed for builds signed with an *Apple Development* certificate.
 
 ### From Source
 
@@ -166,9 +166,58 @@ This repository uses GitHub Actions for automated building, testing, and releasi
 
 - **Build Workflow** (`.github/workflows/build.yml`): Compiles the app on every push to main
 - **Test Workflow** (`.github/workflows/test.yml`): Runs Swift tests on every PR
-- **Release Workflow** (`.github/workflows/release.yml`): Creates releases and uploads DMG when version tags are pushed
+- **Release Workflow** (`.github/workflows/release.yml`): Creates releases and uploads DMG when version tags are pushed; imports a signing certificate and optionally notarizes the DMG
 
-All workflows run on macOS 14+ with Apple Silicon support.
+All workflows run on macOS 15 with Apple Silicon support.
+
+## Code Signing & Notarization
+
+The release workflow supports signing and notarizing the DMG automatically. Both steps are optional—if the required secrets are absent the workflow skips them gracefully and still produces an unsigned DMG.
+
+### Required secrets (code signing)
+
+Add these in **GitHub → Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+|---|---|
+| `MACOS_CERTIFICATE` | Base64-encoded `.p12` certificate + private key exported from Keychain Access |
+| `MACOS_CERTIFICATE_PWD` | Password you set when exporting the `.p12` |
+| `MACOS_KEYCHAIN_PWD` | Any strong random string—used only for the ephemeral CI keychain |
+| `SIGNING_IDENTITY` | Full identity string, e.g. `Apple Development: Abir Majumdar (B4994FKL79)` |
+
+To create `MACOS_CERTIFICATE`:
+
+1. Open **Keychain Access** → My Certificates
+2. Right-click your Apple Development certificate → **Export** → `.p12` format
+3. Base64-encode the file:
+   ```bash
+   base64 -i ~/path/to/cert.p12 | pbcopy   # copies to clipboard
+   ```
+4. Paste the result as the `MACOS_CERTIFICATE` secret value
+
+### How signing works in CI
+
+When a `v*` tag is pushed, `release.yml`:
+
+1. **Import signing certificate** — decodes `MACOS_CERTIFICATE` into a short-lived keychain, imports the certificate, and configures `codesign` to access the private key without a UI prompt
+2. **Build DMG** — runs `build-dmg.sh` with `SIGNING_IDENTITY` injected; the script signs the `.app` bundle and the final `.dmg`
+3. **Notarize DMG** — submits the signed DMG to Apple's notary service (see below)
+
+The ephemeral keychain is created fresh every run and is discarded when the runner terminates.
+
+### Optional secrets (notarization)
+
+Notarization removes the Gatekeeper warning that appears when users open the app on a new Mac. It requires a **Developer ID Application** certificate (paid Apple Developer Program membership).
+
+| Secret | Description |
+|---|---|
+| `NOTARIZATION_APPLE_ID` | Your Apple ID email address |
+| `NOTARIZATION_TEAM_ID` | Your 10-character Apple Developer Team ID, e.g. `B4994FKL79` |
+| `NOTARIZATION_PWD` | App-specific password generated at [appleid.apple.com](https://appleid.apple.com) → Sign-In and Security → App-Specific Passwords |
+
+When all three secrets are present, the workflow uses `xcrun notarytool` to submit the DMG and `xcrun stapler` to attach the notarization ticket before uploading the release asset.
+
+> **Note:** If only an *Apple Development* certificate is available (not *Developer ID Application*), users who download the DMG still need to remove the quarantine attribute manually—see the Installation step above.
 
 ## Architecture
 
