@@ -3,7 +3,7 @@ set -e
 
 # Configuration
 APP_NAME="MarkyMarkdown"
-VERSION="1.1.0"
+VERSION="1.1.1"
 BUILD_DIR=".build"
 APP_BUNDLE_PATH=".build/MarkyMarkdown.app"
 DMG_OUTPUT=".build/MarkyMarkdown-${VERSION}.dmg"

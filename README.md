@@ -267,6 +267,6 @@ For issues with this UI, check the app's preferences and verify the MarkItDown C
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 1.1.1  
 **Built**: Swift 5.9+ with SwiftUI and AppKit  
 **Target**: macOS 13.0+
