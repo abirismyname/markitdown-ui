@@ -39,21 +39,94 @@ jobs:
           exit 1
         fi
     
+    - name: Import signing certificate
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
+      run: |
+        # Skip silently when secrets are not yet configured
+        if [[ -z "${MACOS_CERTIFICATE}" ]]; then
+          echo "⚠️  MACOS_CERTIFICATE secret not set — skipping certificate import. Code signing will be skipped."
+          exit 0
+        fi
+
+        # Decode the certificate to a temp file
+        echo "$MACOS_CERTIFICATE" | base64 --decode > /tmp/build.p12
+
+        # Create a fresh temporary keychain
+        security create-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
+
+        # Import the certificate
+        security import /tmp/build.p12 \
+          -k build.keychain \
+          -P "$MACOS_CERTIFICATE_PWD" \
+          -T /usr/bin/codesign \
+          -T /usr/bin/productsign
+
+        # Allow codesign to access the key without a UI prompt
+        security set-key-partition-list \
+          -S apple-tool:,apple: \
+          -s -k "$MACOS_KEYCHAIN_PWD" build.keychain
+
+        # Include the system keychain so trust chains resolve
+        security list-keychains -d user -s build.keychain login.keychain
+
+        # Clean up temp file
+        rm /tmp/build.p12
+
+        echo "✅ Certificate imported into ephemeral keychain"
+
     - name: Build DMG
       run: bash build-dmg.sh
       env:
         PYTHON_CMD: ${{ env.PYTHON_CMD }}
+        SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
     
+    - name: Notarize DMG
+      env:
+        NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+        NOTARIZATION_TEAM_ID: ${{ secrets.NOTARIZATION_TEAM_ID }}
+        NOTARIZATION_PWD: ${{ secrets.NOTARIZATION_PWD }}
+      run: |
+        # Skip when notarization secrets are not configured
+        if [[ -z "${NOTARIZATION_APPLE_ID}" ]]; then
+          echo "⚠️  NOTARIZATION_APPLE_ID secret not set — skipping notarization."
+          exit 0
+        fi
+
+        DMG_PATH=(.build/MarkyMarkdown-*.dmg)
+        DMG_PATH="${DMG_PATH[0]}"
+        if [[ ! -f "${DMG_PATH}" ]]; then
+          echo "❌ DMG not found at ${DMG_PATH} — cannot notarize."
+          exit 1
+        fi
+        echo "🔏 Submitting ${DMG_PATH} for notarization..."
+        xcrun notarytool submit "${DMG_PATH}" \
+          --apple-id "$NOTARIZATION_APPLE_ID" \
+          --team-id "$NOTARIZATION_TEAM_ID" \
+          --password "$NOTARIZATION_PWD" \
+          --wait
+
+        echo "📎 Stapling notarization ticket to DMG..."
+        xcrun stapler staple "${DMG_PATH}"
+        echo "✅ Notarization complete"
+
     - name: Get version from tag
       id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      run: |
+        TAG="${GITHUB_REF#refs/tags/}"
+        echo "TAG=${TAG}" >> $GITHUB_OUTPUT
+        echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
     
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v2
       with:
-        files: .build/MarkyMarkdown-1.0.0.dmg
+        files: .build/MarkyMarkdown-*.dmg
         body: |
-          # MarkyMarkdown ${{ steps.get_version.outputs.VERSION }}
+          # MarkyMarkdown ${{ steps.get_version.outputs.TAG }}
           
           ## Features
           - 🎉 Menu bar integration with drag-and-drop support
