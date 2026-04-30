@@ -114,7 +114,7 @@ gh pr create
 
 ## GitHub Actions
 
-All workflows use `macos-15` runners with `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`.
+All workflows use `macos-15` runners.
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|

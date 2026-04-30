@@ -70,10 +70,9 @@ Collisions → `original.pdf (1).md`, `original.pdf (2).md`, …
 
 All three workflows (`build`, `test`, `release`) use:
 - Runner: `macos-15`
-- `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` (suppresses Node.js 20 deprecation)
-- `actions/checkout@v4`, `actions/cache@v4`, `softprops/action-gh-release@v2`
+- `actions/checkout@v5`, `actions/cache@v5`, `softprops/action-gh-release@v2`
 
-Do **not** downgrade action versions or remove the Node.js 24 env var.
+Do **not** downgrade action versions.
 
 ---
 
