@@ -23,15 +23,22 @@ A native macOS menu bar application that provides a joyful, delightful interface
 
 ## Installation
 
-### From DMG (Recommended)
+**📖 For detailed installation instructions, see [INSTALL.md](INSTALL.md)**
+
+### Quick Start (From DMG)
 
 1. Download the latest `MarkyMarkdown-*.dmg` file from [Releases](https://github.com/abirismyname/markymarkdown/releases)
 2. Open the DMG file
 3. Drag the `MarkyMarkdown` app to the `Applications` folder
-4. Eject the DMG
+4. In **Terminal**, run:
+   ```bash
+   xattr -rd com.apple.quarantine /Applications/MarkyMarkdown.app
+   ```
 5. Launch the app from Applications or Spotlight (⌘+Space, type "MarkyMarkdown")
 
 The app will appear as a menu bar item and remain running in the background. No configuration needed!
+
+> **Note**: The quarantine removal step (step 4) is needed because macOS flags downloaded apps. We sign the app with a development certificate—this is the standard practice for open source macOS utilities.
 
 ### From Source
 
