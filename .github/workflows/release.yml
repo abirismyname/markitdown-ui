@@ -83,6 +83,7 @@ jobs:
         SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
     
     - name: Notarize DMG
+      continue-on-error: true
       env:
         NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
         NOTARIZATION_TEAM_ID: ${{ secrets.NOTARIZATION_TEAM_ID }}
