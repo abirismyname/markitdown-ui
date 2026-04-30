@@ -148,18 +148,53 @@ echo "✅ App bundle created at: ${APP_BUNDLE_PATH}"
 if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 	echo "🔐 Code signing app bundle..."
 	
-	# Sign the bundled MarkItDown CLI binary first
-	if [[ -f "${APP_BUNDLE_PATH}/Contents/Resources/markitdown/markitdown" ]]; then
+	MARKITDOWN_RESOURCES="${APP_BUNDLE_PATH}/Contents/Resources/markitdown"
+	
+	# Sign all dylibs and extension modules in the bundled Python runtime first
+	if [[ -d "${MARKITDOWN_RESOURCES}/_internal" ]]; then
+		echo "  Signing Python runtime dylibs and extension modules..."
+		
+		# Sign all .dylib files (shared libraries)
+		find "${MARKITDOWN_RESOURCES}/_internal" -type f -name "*.dylib" | while read -r dylib; do
+			codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
+				-ts http://timestamp.apple.com/ts01 "$dylib" 2>/dev/null || true
+		done
+		
+		# Sign all .so files (Python C extension modules)
+		find "${MARKITDOWN_RESOURCES}/_internal" -type f -name "*.so" | while read -r so_file; do
+			codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
+				-ts http://timestamp.apple.com/ts01 "$so_file" 2>/dev/null || true
+		done
+		
+		# Sign the Python framework executable if present
+		if [[ -x "${MARKITDOWN_RESOURCES}/_internal/Python.framework/Python" ]]; then
+			codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
+				-ts http://timestamp.apple.com/ts01 \
+				"${MARKITDOWN_RESOURCES}/_internal/Python.framework/Python" 2>/dev/null || true
+		fi
+		if [[ -x "${MARKITDOWN_RESOURCES}/_internal/Python.framework/Versions/3.12/Python" ]]; then
+			codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
+				-ts http://timestamp.apple.com/ts01 \
+				"${MARKITDOWN_RESOURCES}/_internal/Python.framework/Versions/3.12/Python" 2>/dev/null || true
+		fi
+		
+		echo "  ✓ Python runtime signed"
+	fi
+	
+	# Sign the bundled MarkItDown CLI binary
+	if [[ -f "${MARKITDOWN_RESOURCES}/markitdown" ]]; then
 		echo "  Signing MarkItDown CLI binary..."
-		codesign -s "${SIGNING_IDENTITY}" --force \
-			"${APP_BUNDLE_PATH}/Contents/Resources/markitdown/markitdown" || {
+		codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
+			-ts http://timestamp.apple.com/ts01 \
+			"${MARKITDOWN_RESOURCES}/markitdown" 2>/dev/null || {
 			echo "⚠️  Warning: Could not sign MarkItDown binary. Verify certificate is installed."
 		}
 	fi
 	
-	# Sign the entire app bundle with deep signing
-	echo "  Signing app bundle (deep)..."
-	codesign -s "${SIGNING_IDENTITY}" --deep --force "${APP_BUNDLE_PATH}" || {
+	# Sign the entire app bundle with deep signing, hardened runtime, and timestamp
+	echo "  Signing app bundle (deep with hardened runtime)..."
+	codesign -s "${SIGNING_IDENTITY}" --deep --force --options runtime \
+		-ts http://timestamp.apple.com/ts01 "${APP_BUNDLE_PATH}" || {
 		echo "⚠️  App bundle signing failed. The certificate may not be installed."
 		echo "   Run: security find-identity -v -p codesigning"
 	}
