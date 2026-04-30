@@ -79,8 +79,7 @@ Sources/MarkitdownUI/
 
 All workflows must keep:
 - `runs-on: macos-15`
-- `env: FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`
-- `actions/checkout@v4`, `actions/cache@v4`
+- `actions/checkout@v5`, `actions/cache@v5`
 - `softprops/action-gh-release@v2` (release workflow only)
 
 `build.yml` and `test.yml` trigger on both `push` and `pull_request` to `main`.  
