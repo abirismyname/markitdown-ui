@@ -4,139 +4,84 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref (branch, tag, or SHA) to build from
+        required: false
+        default: main
+      tag:
+        description: Release tag (e.g. v1.2.3)
+        required: true
+        type: string
+      staple:
+        description: Staple notarization ticket to DMG
+        required: false
+        type: boolean
+        default: true
+      draft:
+        description: Create release as draft
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: Mark release as prerelease
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: Build and Release
-    runs-on: macos-15
+  build-and-notarize:
+    name: Build and Notarize
+    uses: ./.github/workflows/notarization.yml
+    with:
+      ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+      staple: ${{ github.event_name == 'workflow_dispatch' && inputs.staple || true }}
+      artifact_name: release-artifacts
+      upload_artifacts: true
+    secrets: inherit
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-and-notarize
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
-    
-    - name: Cache Swift build artifacts
-      uses: actions/cache@v5
+    - name: Download notarized artifacts
+      uses: actions/download-artifact@v5
       with:
+        name: release-artifacts
         path: .build
-        key: ${{ runner.os }}-swift-dmg-${{ hashFiles('**/Package.swift') }}
-        restore-keys: |
-          ${{ runner.os }}-swift-dmg-
-    
-    - name: Detect Python version
-      run: |
-        if command -v python3.12 &> /dev/null; then
-          echo "PYTHON_CMD=python3.12" >> $GITHUB_ENV
-        elif command -v python3.11 &> /dev/null; then
-          echo "PYTHON_CMD=python3.11" >> $GITHUB_ENV
-        elif command -v python3.10 &> /dev/null; then
-          echo "PYTHON_CMD=python3.10" >> $GITHUB_ENV
-        else
-          echo "Error: Python 3.10+ is required"
-          exit 1
-        fi
-    
-    - name: Import signing certificate
-      env:
-        MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-        MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-        MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
-      run: |
-        # Skip silently when secrets are not yet configured
-        if [[ -z "${MACOS_CERTIFICATE}" ]]; then
-          echo "⚠️  MACOS_CERTIFICATE secret not set — skipping certificate import. Code signing will be skipped."
-          exit 0
-        fi
-
-        # Decode the certificate to a temp file
-        echo "$MACOS_CERTIFICATE" | base64 --decode > /tmp/build.p12
-
-        # Create a fresh temporary keychain
-        security create-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
-        security default-keychain -s build.keychain
-        security unlock-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
-
-        # Import the certificate
-        security import /tmp/build.p12 \
-          -k build.keychain \
-          -P "$MACOS_CERTIFICATE_PWD" \
-          -T /usr/bin/codesign \
-          -T /usr/bin/productsign
-
-        # Allow codesign to access the key without a UI prompt
-        security set-key-partition-list \
-          -S apple-tool:,apple: \
-          -s -k "$MACOS_KEYCHAIN_PWD" build.keychain
-
-        # Include the system keychain so trust chains resolve
-        security list-keychains -d user -s build.keychain login.keychain
-
-        # Clean up temp file
-        rm /tmp/build.p12
-
-        echo "✅ Certificate imported into ephemeral keychain"
-
-    - name: Build DMG
-      run: bash build-dmg.sh
-      env:
-        PYTHON_CMD: ${{ env.PYTHON_CMD }}
-        SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
-    
-    - name: Notarize DMG
-      env:
-        NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
-        NOTARIZATION_TEAM_ID: ${{ secrets.NOTARIZATION_TEAM_ID }}
-        NOTARIZATION_PWD: ${{ secrets.NOTARIZATION_PWD }}
-      run: |
-        # Skip when notarization secrets are not configured
-        if [[ -z "${NOTARIZATION_APPLE_ID}" ]]; then
-          echo "⚠️  NOTARIZATION_APPLE_ID secret not set — skipping notarization."
-          exit 0
-        fi
-
-        DMG_PATH=(.build/MarkyMarkdown-*.dmg)
-        DMG_PATH="${DMG_PATH[0]}"
-        if [[ ! -f "${DMG_PATH}" ]]; then
-          echo "❌ DMG not found at ${DMG_PATH} — cannot notarize."
-          exit 1
-        fi
-        echo "🔏 Submitting ${DMG_PATH} for notarization..."
-        NOTARIZE_OUTPUT=$(xcrun notarytool submit "${DMG_PATH}" \
-          --apple-id "$NOTARIZATION_APPLE_ID" \
-          --team-id "$NOTARIZATION_TEAM_ID" \
-          --password "$NOTARIZATION_PWD" \
-          --wait 2>&1)
-        echo "$NOTARIZE_OUTPUT"
-
-        # notarytool exits 0 even when Apple rejects the submission (status: Invalid).
-        # Explicitly check for acceptance so we fail fast with a clear error.
-        if ! echo "$NOTARIZE_OUTPUT" | grep -q "status: Accepted"; then
-          echo "❌ Notarization was not accepted by Apple."
-          SUBMISSION_ID=$(echo "$NOTARIZE_OUTPUT" | awk '/  id:/{print $2; exit}')
-          if [[ -n "${SUBMISSION_ID}" ]]; then
-            echo "📋 Fetching notarization log for submission ${SUBMISSION_ID}..."
-            xcrun notarytool log "${SUBMISSION_ID}" \
-              --apple-id "$NOTARIZATION_APPLE_ID" \
-              --team-id "$NOTARIZATION_TEAM_ID" \
-              --password "$NOTARIZATION_PWD" || true
-          fi
-          exit 1
-        fi
-
-        echo "📎 Stapling notarization ticket to DMG..."
-        xcrun stapler staple "${DMG_PATH}"
-        echo "✅ Notarization complete"
 
     - name: Get version from tag
       id: get_version
       run: |
-        TAG="${GITHUB_REF#refs/tags/}"
+        if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+          TAG="${{ inputs.tag }}"
+        else
+          TAG="${GITHUB_REF#refs/tags/}"
+        fi
+
+        if [[ -z "${TAG}" ]]; then
+          echo "❌ Release tag is required"
+          exit 1
+        fi
+
+        if [[ "${TAG}" != v* ]]; then
+          echo "❌ Release tag must start with 'v' (for example: v1.2.3)"
+          exit 1
+        fi
+
         echo "TAG=${TAG}" >> $GITHUB_OUTPUT
         echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
     
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v2
       with:
+        tag_name: ${{ steps.get_version.outputs.TAG }}
+        target_commitish: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
         files: .build/MarkyMarkdown-*.dmg
         body: |
           # MarkyMarkdown ${{ steps.get_version.outputs.TAG }}
@@ -158,7 +103,7 @@ jobs:
           3. Launch from Applications or Spotlight
           
           No additional setup or dependencies required!
-        draft: false
-        prerelease: false
+        draft: ${{ github.event_name == 'workflow_dispatch' && inputs.draft || false }}
+        prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
