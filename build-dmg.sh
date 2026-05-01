@@ -389,7 +389,7 @@ EOF
 	fi
 
 	if command -v bless >/dev/null 2>&1; then
-		bless --folder "${DMG_MOUNT_POINT}" --openfolder "${DMG_MOUNT_POINT}" || true
+		bless --folder "${DMG_MOUNT_POINT}" || true
 	fi
 
 	hdiutil detach "${DMG_MOUNT_POINT}" -quiet
