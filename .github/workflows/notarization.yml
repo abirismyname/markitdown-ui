@@ -184,10 +184,23 @@ jobs:
           fi
           echo "✅ Signing identity confirmed"
 
+      - name: Derive app version from ref
+        id: app_version
+        run: |
+          REF="${{ inputs.ref || github.ref }}"
+          if [[ "$REF" =~ ^(refs/tags/)?v([0-9]+\.[0-9]+\.[0-9]+.*)$ ]]; then
+            VERSION="${BASH_REMATCH[2]}"
+          else
+            VERSION="1.1.1"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building version: $VERSION"
+
       - name: Build signed DMG
         env:
           PYTHON_CMD: ${{ env.PYTHON_CMD }}
           SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+          APP_VERSION: ${{ steps.app_version.outputs.version }}
         run: bash build-dmg.sh
 
       - name: Resolve DMG path
@@ -257,7 +270,7 @@ jobs:
 
       - name: Upload notarization artifacts
         if: ${{ always() && inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
           path: |
