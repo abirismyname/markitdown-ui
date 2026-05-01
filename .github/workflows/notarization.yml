@@ -1,6 +1,42 @@
-name: Notarization Test
+name: Notarization
 
 on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref (branch, tag, or SHA) to test
+        required: false
+        type: string
+      staple:
+        description: Staple ticket when notarization succeeds
+        required: false
+        type: boolean
+        default: true
+      artifact_name:
+        description: Artifact name for uploaded outputs
+        required: false
+        type: string
+        default: notarization-artifacts
+      upload_artifacts:
+        description: Upload DMG and notarization logs as artifacts
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      MACOS_CERTIFICATE:
+        required: true
+      MACOS_CERTIFICATE_PWD:
+        required: true
+      MACOS_KEYCHAIN_PWD:
+        required: true
+      SIGNING_IDENTITY:
+        required: true
+      NOTARIZATION_APPLE_ID:
+        required: true
+      NOTARIZATION_TEAM_ID:
+        required: true
+      NOTARIZATION_PWD:
+        required: true
   workflow_dispatch:
     inputs:
       ref:
@@ -12,27 +48,37 @@ on:
         required: false
         type: boolean
         default: true
+      artifact_name:
+        description: Artifact name for uploaded outputs
+        required: false
+        type: string
+        default: notarization-artifacts
+      upload_artifacts:
+        description: Upload DMG and notarization logs as artifacts
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
 jobs:
-  notarization-test:
-    name: Build and Notarize (Test)
+  build-and-notarize:
+    name: Build and Notarize
     runs-on: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Cache Swift build artifacts
         uses: actions/cache@v5
         with:
           path: .build
-          key: ${{ runner.os }}-swift-notarize-test-${{ hashFiles('**/Package.swift') }}
+          key: ${{ runner.os }}-swift-notarize-${{ hashFiles('**/Package.swift') }}
           restore-keys: |
-            ${{ runner.os }}-swift-notarize-test-
+            ${{ runner.os }}-swift-notarize-
 
       - name: Detect Python version
         run: |
@@ -202,11 +248,11 @@ jobs:
         if: ${{ inputs.staple }}
         run: xcrun stapler staple "${{ steps.dmg.outputs.path }}"
 
-      - name: Upload test artifacts
-        if: always()
+      - name: Upload notarization artifacts
+        if: ${{ always() && inputs.upload_artifacts }}
         uses: actions/upload-artifact@v5
         with:
-          name: notarization-test-artifacts
+          name: ${{ inputs.artifact_name }}
           path: |
             .build/MarkyMarkdown-*.dmg
             notarization-output.txt
