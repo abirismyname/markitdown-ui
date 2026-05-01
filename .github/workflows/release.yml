@@ -33,9 +33,6 @@ on:
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-and-notarize:
     name: Build and Notarize
@@ -53,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download notarized artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v7
       with:
         name: release-artifacts
         path: .
@@ -66,9 +63,14 @@ jobs:
     - name: Resolve release DMG
       id: release_dmg
       run: |
-        DMG_PATH=$(find . -type f -name 'MarkyMarkdown-*.dmg' | sort | head -1)
+        DMG_NAME="${{ needs.build-and-notarize.outputs.dmg_name }}"
+        if [[ -z "$DMG_NAME" ]]; then
+          echo "❌ DMG name was not provided by the build job"
+          exit 1
+        fi
+        DMG_PATH=$(find . -type f -name "$DMG_NAME" | head -1)
         if [[ -z "$DMG_PATH" || ! -f "$DMG_PATH" ]]; then
-          echo "❌ No release DMG found after downloading artifacts"
+          echo "❌ DMG not found: $DMG_NAME"
           echo "Downloaded files:"
           find . -maxdepth 4 -type f | sort
           exit 1
@@ -99,7 +101,7 @@ jobs:
         echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
     
     - name: Upload Release Assets
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ steps.get_version.outputs.TAG }}
         target_commitish: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}

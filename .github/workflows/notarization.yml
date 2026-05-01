@@ -22,6 +22,10 @@ on:
         required: false
         type: boolean
         default: true
+    outputs:
+      dmg_name:
+        description: Filename of the built and notarized DMG
+        value: ${{ jobs.build-and-notarize.outputs.dmg_name }}
     secrets:
       MACOS_CERTIFICATE:
         required: true
@@ -66,6 +70,8 @@ jobs:
   build-and-notarize:
     name: Build and Notarize
     runs-on: macos-15
+    outputs:
+      dmg_name: ${{ steps.dmg.outputs.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -193,6 +199,7 @@ jobs:
             exit 1
           fi
           echo "path=$DMG_PATH" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$DMG_PATH")" >> "$GITHUB_OUTPUT"
           echo "Using DMG: $DMG_PATH"
 
       - name: Verify signatures inside mounted DMG
@@ -250,11 +257,12 @@ jobs:
 
       - name: Upload notarization artifacts
         if: ${{ always() && inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.artifact_name }}
           path: |
-            .build/MarkyMarkdown-*.dmg
+            ${{ steps.dmg.outputs.path }}
             notarization-output.txt
             notarization-log.json
           if-no-files-found: warn
+          include-hidden-files: true
