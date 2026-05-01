@@ -11,6 +11,21 @@ struct AboutView: View {
         "URLs"
     ]
 
+    private var versionText: String {
+        let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let buildVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+
+        if let shortVersion, let buildVersion, shortVersion != buildVersion {
+            return "Version \(shortVersion) (\(buildVersion))"
+        }
+
+        if let shortVersion {
+            return "Version \(shortVersion)"
+        }
+
+        return "Version unavailable"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("About MarkyMarkdown")
@@ -18,6 +33,10 @@ struct AboutView: View {
 
             Text("MarkyMarkdown uses the MarkItDown CLI to convert documents into clean Markdown output.")
                 .font(.body)
+                .foregroundStyle(.secondary)
+
+            Text(versionText)
+                .font(.footnote)
                 .foregroundStyle(.secondary)
 
             Link("MarkItDown Repository", destination: URL(string: "https://github.com/microsoft/markitdown")!)

@@ -42,6 +42,7 @@ jobs:
     uses: ./.github/workflows/notarization.yml
     with:
       ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+      app_version: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
       staple: ${{ github.event_name == 'workflow_dispatch' && inputs.staple || true }}
       artifact_name: release-artifacts
       upload_artifacts: true

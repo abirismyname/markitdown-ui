@@ -3,7 +3,13 @@ set -e
 
 # Configuration
 APP_NAME="MarkyMarkdown"
-VERSION="1.1.1"
+if [[ -n "${APP_VERSION:-}" ]]; then
+	VERSION="${APP_VERSION#v}"
+elif TAG_FROM_GIT="$(git describe --tags --exact-match 2>/dev/null)"; then
+	VERSION="${TAG_FROM_GIT#v}"
+else
+	VERSION="1.1.1"
+fi
 BUILD_DIR=".build"
 APP_BUNDLE_PATH=".build/MarkyMarkdown.app"
 DMG_OUTPUT=".build/MarkyMarkdown-${VERSION}.dmg"
@@ -116,7 +122,7 @@ fi
 cp "Sources/MarkitdownUI/Resources/AppIcon.icns" "${APP_BUNDLE_PATH}/Contents/Resources/"
 
 # Create Info.plist
-cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << 'EOF'
+cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -134,9 +140,9 @@ cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << 'EOF'
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1.1</string>
+	<string>${VERSION}</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>${VERSION}</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>LSMinimumSystemVersion</key>

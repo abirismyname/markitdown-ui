@@ -7,6 +7,10 @@ on:
         description: Git ref (branch, tag, or SHA) to test
         required: false
         type: string
+      app_version:
+        description: App version (for DMG filename and Info.plist), with or without leading v
+        required: false
+        type: string
       staple:
         description: Staple ticket when notarization succeeds
         required: false
@@ -43,6 +47,10 @@ on:
         description: Git ref (branch, tag, or SHA) to test
         required: false
         default: main
+      app_version:
+        description: App version (for DMG filename and Info.plist), with or without leading v
+        required: false
+        type: string
       staple:
         description: Staple ticket when notarization succeeds
         required: false
@@ -92,6 +100,32 @@ jobs:
             echo "Error: Python 3.10+ is required"
             exit 1
           fi
+
+      - name: Resolve app version
+        id: app_version
+        run: |
+          RAW_VERSION="${{ inputs.app_version }}"
+
+          if [[ -z "${RAW_VERSION}" ]]; then
+            REF_VALUE="${{ inputs.ref || github.ref }}"
+            if [[ "${REF_VALUE}" == refs/tags/* ]]; then
+              RAW_VERSION="${REF_VALUE#refs/tags/}"
+            elif [[ "${REF_VALUE}" == v* ]]; then
+              RAW_VERSION="${REF_VALUE}"
+            else
+              RAW_VERSION="$(git describe --tags --exact-match 2>/dev/null || true)"
+            fi
+          fi
+
+          VERSION="${RAW_VERSION#v}"
+          if [[ -z "${VERSION}" ]]; then
+            VERSION="1.1.1"
+            echo "⚠️  Could not infer tagged version. Falling back to ${VERSION}."
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "APP_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "Using app version: ${VERSION}"
 
       - name: Validate required secrets
         env:
@@ -182,6 +216,7 @@ jobs:
         env:
           PYTHON_CMD: ${{ env.PYTHON_CMD }}
           SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+          APP_VERSION: ${{ steps.app_version.outputs.version }}
         run: bash build-dmg.sh
 
       - name: Resolve DMG path
