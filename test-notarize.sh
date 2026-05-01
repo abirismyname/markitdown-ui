@@ -121,7 +121,7 @@ else
         echo "$LOG_OUTPUT"
         
         # Count and display first errors
-        ERROR_COUNT=$(echo "$LOG_OUTPUT" | grep -c '"severity":"error"' || true)
+        ERROR_COUNT=$(echo "$LOG_OUTPUT" | grep -E -c '"severity"[[:space:]]*:[[:space:]]*"error"' || true)
         echo -e "\n${RED}Total errors: ${ERROR_COUNT}${NC}"
         
         # Show first few error messages

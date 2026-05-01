@@ -1,0 +1,182 @@
+name: Notarization Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref (branch, tag, or SHA) to test
+        required: false
+        default: main
+      staple:
+        description: Staple ticket when notarization succeeds
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  notarization-test:
+    name: Build and Notarize (Test)
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Cache Swift build artifacts
+        uses: actions/cache@v5
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-notarize-test-${{ hashFiles('**/Package.swift') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-notarize-test-
+
+      - name: Detect Python version
+        run: |
+          if command -v python3.12 &> /dev/null; then
+            echo "PYTHON_CMD=python3.12" >> "$GITHUB_ENV"
+          elif command -v python3.11 &> /dev/null; then
+            echo "PYTHON_CMD=python3.11" >> "$GITHUB_ENV"
+          elif command -v python3.10 &> /dev/null; then
+            echo "PYTHON_CMD=python3.10" >> "$GITHUB_ENV"
+          else
+            echo "Error: Python 3.10+ is required"
+            exit 1
+          fi
+
+      - name: Validate required secrets
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+          NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_TEAM_ID: ${{ secrets.NOTARIZATION_TEAM_ID }}
+          NOTARIZATION_PWD: ${{ secrets.NOTARIZATION_PWD }}
+        run: |
+          missing=0
+          for name in \
+            MACOS_CERTIFICATE \
+            MACOS_CERTIFICATE_PWD \
+            MACOS_KEYCHAIN_PWD \
+            SIGNING_IDENTITY \
+            NOTARIZATION_APPLE_ID \
+            NOTARIZATION_TEAM_ID \
+            NOTARIZATION_PWD; do
+            if [[ -z "${!name}" ]]; then
+              echo "❌ Missing required secret: $name"
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            exit 1
+          fi
+
+      - name: Import signing certificate
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
+        run: |
+          echo "$MACOS_CERTIFICATE" | base64 --decode > /tmp/build.p12
+
+          security create-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
+
+          security import /tmp/build.p12 \
+            -k build.keychain \
+            -P "$MACOS_CERTIFICATE_PWD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/productsign
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "$MACOS_KEYCHAIN_PWD" build.keychain
+
+          security list-keychains -d user -s build.keychain login.keychain
+          rm /tmp/build.p12
+
+      - name: Build signed DMG
+        env:
+          PYTHON_CMD: ${{ env.PYTHON_CMD }}
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+        run: bash build-dmg.sh
+
+      - name: Resolve DMG path
+        id: dmg
+        run: |
+          DMG_PATH=$(ls -t .build/MarkyMarkdown-*.dmg | grep -v -- '-rw\.dmg$' | head -1)
+          if [[ -z "$DMG_PATH" || ! -f "$DMG_PATH" ]]; then
+            echo "❌ Could not locate DMG output"
+            exit 1
+          fi
+          echo "path=$DMG_PATH" >> "$GITHUB_OUTPUT"
+          echo "Using DMG: $DMG_PATH"
+
+      - name: Verify signatures inside mounted DMG
+        run: |
+          ATTACH_OUTPUT=$(hdiutil attach -nobrowse -readonly "${{ steps.dmg.outputs.path }}")
+          MOUNT_POINT=$(printf "%s\n" "$ATTACH_OUTPUT" | tail -1 | sed -E 's@^/dev/[^[:space:]]+[[:space:]]+[^[:space:]]+[[:space:]]+@@')
+          APP_PATH="$MOUNT_POINT/MarkyMarkdown.app"
+
+          echo "Mounted at: $MOUNT_POINT"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          codesign --verify --strict --verbose=2 "$APP_PATH/Contents/MacOS/MarkyMarkdown"
+          codesign --verify --strict --verbose=2 "$APP_PATH/Contents/Resources/markitdown/_internal/Python.framework/Python"
+
+          hdiutil detach "$MOUNT_POINT"
+
+      - name: Notarize DMG
+        env:
+          NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_TEAM_ID: ${{ secrets.NOTARIZATION_TEAM_ID }}
+          NOTARIZATION_PWD: ${{ secrets.NOTARIZATION_PWD }}
+          DMG_PATH: ${{ steps.dmg.outputs.path }}
+        run: |
+          set +e
+          NOTARIZE_OUTPUT=$(xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$NOTARIZATION_APPLE_ID" \
+            --team-id "$NOTARIZATION_TEAM_ID" \
+            --password "$NOTARIZATION_PWD" \
+            --wait 2>&1)
+          EXIT_CODE=$?
+          set -e
+
+          printf "%s\n" "$NOTARIZE_OUTPUT" | tee notarization-output.txt
+
+          if [[ "$EXIT_CODE" -ne 0 ]]; then
+            echo "❌ notarytool submit failed"
+            exit 1
+          fi
+
+          if ! printf "%s\n" "$NOTARIZE_OUTPUT" | grep -q "status: Accepted"; then
+            echo "❌ Notarization was not accepted"
+            SUBMISSION_ID=$(printf "%s\n" "$NOTARIZE_OUTPUT" | awk '/  id:/{print $2; exit}')
+            if [[ -n "$SUBMISSION_ID" ]]; then
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --apple-id "$NOTARIZATION_APPLE_ID" \
+                --team-id "$NOTARIZATION_TEAM_ID" \
+                --password "$NOTARIZATION_PWD" \
+                | tee notarization-log.json || true
+            fi
+            exit 1
+          fi
+
+      - name: Staple ticket
+        if: ${{ inputs.staple }}
+        run: xcrun stapler staple "${{ steps.dmg.outputs.path }}"
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notarization-test-artifacts
+          path: |
+            .build/MarkyMarkdown-*.dmg
+            notarization-output.txt
+            notarization-log.json
+          if-no-files-found: warn

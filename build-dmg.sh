@@ -100,6 +100,18 @@ cp "${EXECUTABLE_PATH}" "${APP_BUNDLE_PATH}/Contents/MacOS/${APP_NAME}"
 cp -r "${MARKITDOWN_STANDALONE_DIR}/dist/markitdown" "${APP_BUNDLE_PATH}/Contents/Resources/"
 chmod +x "${APP_BUNDLE_PATH}/Contents/Resources/markitdown/markitdown"
 
+# Normalize Python.framework binary layout so top-level Python points at the canonical, signed runtime binary.
+PYTHON_FRAMEWORK_DIR="${APP_BUNDLE_PATH}/Contents/Resources/markitdown/_internal/Python.framework"
+if [[ -d "${PYTHON_FRAMEWORK_DIR}" && -f "${PYTHON_FRAMEWORK_DIR}/Python" ]]; then
+	if [[ -f "${PYTHON_FRAMEWORK_DIR}/Versions/Current/Python" ]]; then
+		rm -f "${PYTHON_FRAMEWORK_DIR}/Python"
+		ln -s "Versions/Current/Python" "${PYTHON_FRAMEWORK_DIR}/Python"
+	elif [[ -f "${PYTHON_FRAMEWORK_DIR}/Versions/3.11/Python" ]]; then
+		rm -f "${PYTHON_FRAMEWORK_DIR}/Python"
+		ln -s "Versions/3.11/Python" "${PYTHON_FRAMEWORK_DIR}/Python"
+	fi
+fi
+
 # Copy app icon
 cp "Sources/MarkitdownUI/Resources/AppIcon.icns" "${APP_BUNDLE_PATH}/Contents/Resources/"
 
@@ -146,6 +158,12 @@ echo "✅ App bundle created at: ${APP_BUNDLE_PATH}"
 # Code Signing
 if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 	echo "🔐 Code signing app bundle with '${SIGNING_IDENTITY}'..."
+
+	sign_binary() {
+		local target="$1"
+		echo "    Signing: ${target}"
+		codesign -s "${SIGNING_IDENTITY}" --force --options runtime --timestamp "${target}"
+	}
 	
 	# Verify the signing identity exists and is valid for notarization
 	if ! security find-identity -v -p codesigning | grep -q "${SIGNING_IDENTITY}"; then
@@ -165,18 +183,35 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 	MARKITDOWN_RESOURCES="${APP_BUNDLE_PATH}/Contents/Resources/markitdown"
 	DYLIB_COUNT=0
 	SO_COUNT=0
+	BIN_COUNT=0
 	
 	# Sign all dylibs and extension modules in the bundled Python runtime
 	if [[ -d "${MARKITDOWN_RESOURCES}/_internal" ]]; then
 		echo "  Signing Python runtime binaries..."
+		
+		# Sign executable Mach-O files first (includes _internal/Python and helper binaries).
+		BIN_COUNT=$(find "${MARKITDOWN_RESOURCES}/_internal" -type f -perm -111 \
+			! -path "*/Python.framework/Python" \
+			! -path "*/Python.framework/Versions/Current/Python" \
+			| while read -r f; do file -b "$f" | grep -q "Mach-O" && echo "$f"; done | wc -l)
+		if [[ $BIN_COUNT -gt 0 ]]; then
+			echo "    Signing $BIN_COUNT executable Mach-O files..."
+			find "${MARKITDOWN_RESOURCES}/_internal" -type f -perm -111 \
+				! -path "*/Python.framework/Python" \
+				! -path "*/Python.framework/Versions/Current/Python" \
+				| while read -r bin_file; do
+				if file -b "$bin_file" | grep -q "Mach-O"; then
+					sign_binary "$bin_file"
+				fi
+			done
+		fi
 		
 		# Sign all .dylib files (shared libraries) 
 		DYLIB_COUNT=$(find "${MARKITDOWN_RESOURCES}/_internal" -type f -name "*.dylib" | wc -l)
 		if [[ $DYLIB_COUNT -gt 0 ]]; then
 			echo "    Signing $DYLIB_COUNT .dylib files..."
 			find "${MARKITDOWN_RESOURCES}/_internal" -type f -name "*.dylib" | while read -r dylib; do
-				codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
-					--timestamp=http://timestamp.apple.com/ts01 "$dylib" || echo "    ❌ Failed to sign: $dylib"
+				sign_binary "$dylib"
 			done
 		fi
 		
@@ -185,8 +220,7 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 		if [[ $SO_COUNT -gt 0 ]]; then
 			echo "    Signing $SO_COUNT .so files..."
 			find "${MARKITDOWN_RESOURCES}/_internal" -type f -name "*.so" | while read -r so_file; do
-				codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
-					--timestamp=http://timestamp.apple.com/ts01 "$so_file" || echo "    ❌ Failed to sign: $so_file"
+				sign_binary "$so_file"
 			done
 		fi
 		
@@ -197,64 +231,75 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 			PYTHON_FRAMEWORK_BIN="${PYTHON_FRAMEWORK_DIR}/Versions/Current/Python"
 		elif [[ -x "${PYTHON_FRAMEWORK_DIR}/Versions/3.11/Python" ]]; then
 			PYTHON_FRAMEWORK_BIN="${PYTHON_FRAMEWORK_DIR}/Versions/3.11/Python"
-		elif [[ -x "${PYTHON_FRAMEWORK_DIR}/Python" ]]; then
-			PYTHON_FRAMEWORK_BIN="${PYTHON_FRAMEWORK_DIR}/Python"
 		fi
 
 		if [[ -n "${PYTHON_FRAMEWORK_BIN}" ]]; then
 			echo "    Signing Python.framework binary (${PYTHON_FRAMEWORK_BIN})..."
-			codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
-				--timestamp=http://timestamp.apple.com/ts01 \
-				"${PYTHON_FRAMEWORK_BIN}"
+			sign_binary "${PYTHON_FRAMEWORK_BIN}"
 		fi
 
-		echo "  ✓ Python runtime binaries signed ($DYLIB_COUNT dylibs, $SO_COUNT .so files)"
+		echo "  ✓ Python runtime binaries signed ($BIN_COUNT executables, $DYLIB_COUNT dylibs, $SO_COUNT .so files)"
 	fi
 	
 	# Sign the bundled MarkItDown CLI binary
 	if [[ -f "${MARKITDOWN_RESOURCES}/markitdown" ]]; then
 		echo "  Signing MarkItDown CLI binary..."
-		codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
-			--timestamp=http://timestamp.apple.com/ts01 \
-			"${MARKITDOWN_RESOURCES}/markitdown"
+		sign_binary "${MARKITDOWN_RESOURCES}/markitdown"
 		echo "  ✓ MarkItDown binary signed"
 	fi
 	
 	# Sign the Swift executable
 	echo "  Signing Swift executable..."
-	codesign -s "${SIGNING_IDENTITY}" --force --options runtime \
-		--timestamp=http://timestamp.apple.com/ts01 \
-		"${APP_BUNDLE_PATH}/Contents/MacOS/MarkyMarkdown"
+	sign_binary "${APP_BUNDLE_PATH}/Contents/MacOS/MarkyMarkdown"
 	
-	# Sign the entire app bundle with deep signing (recursively sign everything)
-	echo "  Signing app bundle (deep)..."
-	codesign -s "${SIGNING_IDENTITY}" --deep --force --options runtime \
-		--timestamp=http://timestamp.apple.com/ts01 "${APP_BUNDLE_PATH}"
+	# Sign the app bundle container (without --deep) after nested code is already signed.
+	echo "  Signing app bundle..."
+	codesign -s "${SIGNING_IDENTITY}" --force --options runtime --timestamp "${APP_BUNDLE_PATH}"
 	
 	# Verify the signatures
 	echo "  Verifying signatures..."
 	VERIFY_ERRORS=0
 	
-	if ! codesign -v "${APP_BUNDLE_PATH}" 2>&1; then
+	if ! codesign --verify --deep --strict --verbose=2 "${APP_BUNDLE_PATH}" 2>&1; then
 		echo "⚠️  Main app signature verification failed"
 		VERIFY_ERRORS=$((VERIFY_ERRORS + 1))
+	fi
+
+	if ! codesign --verify --strict --verbose=2 "${APP_BUNDLE_PATH}/Contents/MacOS/MarkyMarkdown" 2>&1; then
+		echo "⚠️  Main executable signature verification failed"
+		VERIFY_ERRORS=$((VERIFY_ERRORS + 1))
+	fi
+
+	PYTHON_TOP="${MARKITDOWN_RESOURCES}/_internal/Python.framework/Python"
+	if [[ -e "${PYTHON_TOP}" ]]; then
+		if ! codesign --verify --strict --verbose=2 "${PYTHON_TOP}" 2>&1; then
+			echo "⚠️  Python.framework/Python signature verification failed"
+			VERIFY_ERRORS=$((VERIFY_ERRORS + 1))
+		fi
 	fi
 	
 	# Sample verify a few dylibs
 	SAMPLE_DYLIB=$(find "${MARKITDOWN_RESOURCES}/_internal" -type f -name "*.dylib" | head -1)
 	if [[ -n "$SAMPLE_DYLIB" ]]; then
-		if codesign -v "$SAMPLE_DYLIB" 2>&1; then
+		if codesign --verify --strict --verbose=2 "$SAMPLE_DYLIB" 2>&1; then
 			echo "✓ Sample dylib verified"
 		else
 			echo "⚠️  Sample dylib verification failed"
 			VERIFY_ERRORS=$((VERIFY_ERRORS + 1))
 		fi
 	fi
+
+	if spctl -a -t exec -vv "${APP_BUNDLE_PATH}" 2>&1; then
+		echo "✓ Gatekeeper assessment passed"
+	else
+		echo "⚠️  Gatekeeper assessment failed (expected before notarization)"
+	fi
 	
 	if [[ $VERIFY_ERRORS -eq 0 ]]; then
 		echo -e "\n✅ All code signatures verified successfully"
 	else
-		echo -e "\n⚠️  Some signature verification failures detected"
+		echo -e "\n❌ Signature verification failures detected"
+		exit 1
 	fi
 else
 	echo "⚠️  Code signing disabled — app will NOT pass notarization"
@@ -268,8 +313,8 @@ DMG_TEMP_DIR=".build/dmg_temp"
 rm -rf "${DMG_TEMP_DIR}"
 mkdir -p "${DMG_TEMP_DIR}"
 
-# Copy app bundle to temp directory
-cp -r "${APP_BUNDLE_PATH}" "${DMG_TEMP_DIR}/"
+# Copy app bundle to temp directory without altering symlinks/metadata required by code signatures.
+ditto "${APP_BUNDLE_PATH}" "${DMG_TEMP_DIR}/MarkyMarkdown.app"
 
 # Create a symlink to Applications folder for easy installation
 ln -s /Applications "${DMG_TEMP_DIR}/Applications"
