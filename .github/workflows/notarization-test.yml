@@ -97,7 +97,15 @@ jobs:
             -S apple-tool:,apple: \
             -s -k "$MACOS_KEYCHAIN_PWD" build.keychain
 
-          security list-keychains -d user -s build.keychain login.keychain
+          # Prevent the keychain from auto-locking during the long build
+          security set-keychain-settings -lut 21600 build.keychain
+
+          # Keep System.keychain in the search path so that Apple's intermediate
+          # and root CAs remain accessible for certificate-chain verification.
+          # Without it, `security find-identity -v -p codesigning` cannot build a
+          # trusted chain and treats the imported identity as invalid, causing
+          # build-dmg.sh to skip code signing entirely.
+          security list-keychains -d user -s build.keychain login.keychain /Library/Keychains/System.keychain
           rm /tmp/build.p12
 
       - name: Build signed DMG
