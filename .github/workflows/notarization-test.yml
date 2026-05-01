@@ -100,13 +100,37 @@ jobs:
           # Prevent the keychain from auto-locking during the long build
           security set-keychain-settings -lut 21600 build.keychain
 
-          # Keep System.keychain in the search path so that Apple's intermediate
-          # and root CAs remain accessible for certificate-chain verification.
-          # Without it, `security find-identity -v -p codesigning` cannot build a
-          # trusted chain and treats the imported identity as invalid, causing
-          # build-dmg.sh to skip code signing entirely.
-          security list-keychains -d user -s build.keychain login.keychain /Library/Keychains/System.keychain
+          # Keep System.keychain and SystemRootCertificates.keychain in the search
+          # path so that Apple's intermediate and root CAs remain accessible for
+          # certificate-chain verification. Without both, `security find-identity
+          # -v -p codesigning` cannot build a trusted chain and treats the imported
+          # identity as invalid, causing build-dmg.sh to skip code signing entirely.
+          security list-keychains -d user \
+            -s build.keychain \
+               login.keychain \
+               /Library/Keychains/System.keychain \
+               /System/Library/Keychains/SystemRootCertificates.keychain
           rm /tmp/build.p12
+
+      - name: Verify signing identity
+        env:
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+        run: |
+          echo "=== Keychain search list ==="
+          security list-keychains -d user
+          echo "=== All codesigning identities ==="
+          security find-identity -p codesigning || true
+          echo "=== Valid codesigning identities ==="
+          security find-identity -v -p codesigning || true
+
+          if ! security find-identity -v -p codesigning | grep -qF "$SIGNING_IDENTITY"; then
+            echo "❌ Signing identity not found as valid in keychain."
+            echo "   Identity searched for: $SIGNING_IDENTITY"
+            echo "   Ensure MACOS_CERTIFICATE contains the correct p12 and that"
+            echo "   SIGNING_IDENTITY exactly matches the certificate's Common Name."
+            exit 1
+          fi
+          echo "✅ Signing identity confirmed"
 
       - name: Build signed DMG
         env:
@@ -180,7 +204,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: notarization-test-artifacts
           path: |
