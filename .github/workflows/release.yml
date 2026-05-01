@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download notarized artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: release-artifacts
         path: .
@@ -101,7 +101,7 @@ jobs:
         echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
     
     - name: Upload Release Assets
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ steps.get_version.outputs.TAG }}
         target_commitish: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
