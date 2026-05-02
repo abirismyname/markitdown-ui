@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarkyMarkdown — Drag, Drop, Convert to Markdown</title>
+  <meta name="description" content="Native macOS menu bar app. Drag any file onto the icon and get a Markdown file instantly — 100% on your Mac, zero cloud, zero prerequisites." />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:title"       content="MarkyMarkdown — Drag, Drop, Convert to Markdown" />
+  <meta property="og:description" content="Native macOS menu bar app. 100% local. Zero prerequisites. Drag any file, get Markdown instantly." />
+  <meta property="og:image"       content="https://abirismyname.github.io/markymarkdown/assets/hero.PNG" />
+  <meta property="og:type"        content="website" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="MarkyMarkdown" />
+  <meta name="twitter:description" content="Native macOS drag-and-drop Markdown converter. 100% local." />
+  <meta name="twitter:image"       content="https://abirismyname.github.io/markymarkdown/assets/hero.PNG" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────── -->
+<nav>
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html">
+      <img src="assets/icon-32.png" alt="MarkyMarkdown icon" />
+      MarkyMarkdown
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#formats">Formats</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+      <li><a class="btn-nav" href="https://github.com/abirismyname/markymarkdown/releases/latest">Download</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-image-wrap">
+      <img src="assets/hero.PNG"
+           alt="MarkyMarkdown — drag and drop any file to convert to Markdown on your Mac" />
+    </div>
+    <div class="hero-cta">
+      <a class="btn btn-primary"
+         href="https://github.com/abirismyname/markymarkdown/releases/latest">
+        ⬇️ Download for macOS
+      </a>
+      <span class="trust-badge">🔒 100% Local — your files never leave your Mac</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Privacy-first banner ──────────────────────────────────── -->
+<section id="privacy-banner">
+  <div class="container">
+    <div class="privacy-banner-padlock">🔐</div>
+    <p class="privacy-banner-headline">Zero Cloud. Zero Telemetry. Zero Worries.</p>
+    <div class="privacy-pillars">
+      <div class="pillar">
+        <span class="pillar-icon">📡</span>
+        <span class="pillar-text">No internet required</span>
+      </div>
+      <div class="pillar">
+        <span class="pillar-icon">🚫</span>
+        <span class="pillar-text">No accounts</span>
+      </div>
+      <div class="pillar">
+        <span class="pillar-icon">👁️</span>
+        <span class="pillar-text">No tracking</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── App Screenshot ─────────────────────────────────────────── -->
+<section id="screenshot">
+  <div class="container">
+    <div class="screenshot-wrap">
+      <img src="assets/app-ui.png"
+           alt="MarkyMarkdown drop zone UI — drag files here to convert" />
+    </div>
+    <p class="screenshot-caption">Drag any file onto the drop zone (or the menu bar icon) and conversion happens instantly.</p>
+  </div>
+</section>
+
+<!-- ── How it Works ──────────────────────────────────────────── -->
+<section id="how-it-works">
+  <div class="container">
+    <h2 class="section-title">How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">📂</div>
+        <div class="step-number">1</div>
+        <h3>Drag a file</h3>
+        <p>Drop any supported file onto the MarkyMarkdown menu bar icon or the drop window.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon">⚙️</div>
+        <div class="step-number">2</div>
+        <h3>Converts on your Mac</h3>
+        <p>The bundled MarkItDown engine runs 100% locally — no internet, no uploads, no waiting.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon">✅</div>
+        <div class="step-number">3</div>
+        <h3>Markdown appears</h3>
+        <p>A <code>.md</code> file lands right next to your original. That's it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ──────────────────────────────────────────────── -->
+<section id="features">
+  <div class="container">
+    <h2 class="section-title">Features</h2>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3>Zero Prerequisites</h3>
+        <p>Python runtime and all dependencies are bundled. Users install nothing extra — just drag the app into Applications.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Menu Bar Integration</h3>
+        <p>Lives quietly in your menu bar. Drop files directly onto the icon without opening any window.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🎉</div>
+        <h3>Celebratory Feedback</h3>
+        <p>Every successful conversion gets a randomised cheerful message. Milestone achievements at 10, 50, and 100 conversions.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🔢</div>
+        <h3>Smart Collision Naming</h3>
+        <p>Converting the same file twice? MarkyMarkdown auto-appends <code>(1)</code>, <code>(2)</code>, … so you never overwrite existing output.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h3>Wide Format Support</h3>
+        <p>PDF, Word, PowerPoint, Excel, HTML, plain text, images — if MarkItDown can read it, MarkyMarkdown converts it.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>Open Source — MIT</h3>
+        <p>Fully open source on GitHub. Inspect the code, contribute, or fork — no lock-in, no surprises.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Formats ────────────────────────────────────────────────── -->
+<section id="formats">
+  <div class="container">
+    <h2 class="section-title">Supported Formats</h2>
+    <div class="format-badges">
+      <span class="format-badge">PDF</span>
+      <span class="format-badge">DOCX</span>
+      <span class="format-badge">PPTX</span>
+      <span class="format-badge">XLSX</span>
+      <span class="format-badge">HTML</span>
+      <span class="format-badge">TXT</span>
+      <span class="format-badge">JPG / PNG / GIF</span>
+      <span class="format-badge">CSV</span>
+      <span class="format-badge">EPUB</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Download CTA ───────────────────────────────────────────── -->
+<section id="download">
+  <div class="container">
+    <h2 class="section-title">Ready to convert?</h2>
+    <p class="download-sub">Free, open source, and entirely on your Mac.</p>
+    <a class="btn btn-primary"
+       href="https://github.com/abirismyname/markymarkdown/releases/latest">
+      ⬇️ Download MarkyMarkdown
+    </a>
+    <p class="os-badge">Requires macOS 13 Ventura or later · Apple Silicon</p>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="https://github.com/abirismyname/markymarkdown">GitHub</a>
+      <a href="https://github.com/abirismyname/markymarkdown/blob/main/LICENSE">MIT License</a>
+      <a href="https://github.com/abirismyname/markymarkdown/issues">Support</a>
+    </div>
+    <p>© 2024–2025 MarkyMarkdown. Built with ❤️ on macOS.</p>
+  </div>
+</footer>
+
+</body>
+</html>
