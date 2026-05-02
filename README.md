@@ -153,6 +153,27 @@ Add the printed value as a repository secret named `SPARKLE_ED_PRIVATE_KEY`.
 
 Once both secrets are set, every `v*` tag push will build the DMG, sign it, update `docs/appcast.xml`, and push the updated feed automatically.
 
+### Releasing a new version
+
+> **TL;DR:** push a version tag. Everything else is automatic.
+
+```bash
+git tag v1.2.0
+git push --tags
+```
+
+That single command triggers three sequential CI jobs in `release.yml`:
+
+| CI job | What it does |
+|---|---|
+| `build-and-notarize` | Builds the signed + notarized DMG |
+| `create-release` | Creates a GitHub Release and attaches the DMG |
+| `update-appcast` | Signs the DMG with the EdDSA key, appends a new entry to `docs/appcast.xml`, commits & pushes it to `main` |
+
+**Sparkle does not poll the GitHub Releases page.** It fetches the [appcast feed](https://abirismyname.github.io/markymarkdown/appcast.xml) — an RSS-style XML file hosted via GitHub Pages. The appcast entry contains the DMG download URL (which does point at the GitHub Release asset), the new version number, the byte size, and an EdDSA signature. When users' copies of MarkyMarkdown next check for updates (on launch or via "Check for Updates…"), they read this feed, compare the version, and Sparkle handles downloading, verifying, and installing the update automatically.
+
+If `SPARKLE_ED_PRIVATE_KEY` is not configured the `update-appcast` job skips with a warning and no update will be delivered to existing users even though the GitHub Release exists. Set the secret before tagging if you want in-app updates.
+
 ## Milestone Celebrations
 
 Every conversion counts! Unlock special achievements:
