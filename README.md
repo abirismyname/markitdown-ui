@@ -238,7 +238,9 @@ The app uses a clean MVVM architecture:
 
 ## License
 
-This project is provided as-is. See individual component licenses for more information.
+MarkyMarkdown is released under the [MIT License](LICENSE).
+
+This app bundles [MarkItDown](https://github.com/microsoft/markitdown) by Microsoft Corporation, also released under the MIT License. See [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) for the full copyright notice.
 
 ## Troubleshooting
 
