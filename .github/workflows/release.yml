@@ -202,34 +202,34 @@ jobs:
           | /tmp/sparkle-tools/bin/sign_update "${DMG_PATH}" --ed-key-file -)
 
         NEW_ITEM=$(cat <<ITEM
-    <item>
-      <title>Version ${VERSION}</title>
-      <pubDate>${PUB_DATE}</pubDate>
-      <sparkle:releaseNotesLink>
-        https://github.com/abirismyname/markymarkdown/releases/tag/v${VERSION}
-      </sparkle:releaseNotesLink>
-      <enclosure
-        url="${DOWNLOAD_URL}"
-        sparkle:version="${VERSION}"
-        sparkle:shortVersionString="${VERSION}"
-        length="${DMG_SIZE}"
-        type="application/octet-stream"
-        sparkle:edSignature="${ED_SIGNATURE}" />
-    </item>
-ITEM
+        <item>
+          <title>Version ${VERSION}</title>
+          <pubDate>${PUB_DATE}</pubDate>
+          <sparkle:releaseNotesLink>
+            https://github.com/abirismyname/markymarkdown/releases/tag/v${VERSION}
+          </sparkle:releaseNotesLink>
+          <enclosure
+            url="${DOWNLOAD_URL}"
+            sparkle:version="${VERSION}"
+            sparkle:shortVersionString="${VERSION}"
+            length="${DMG_SIZE}"
+            type="application/octet-stream"
+            sparkle:edSignature="${ED_SIGNATURE}" />
+        </item>
+        ITEM
         )
 
         # Insert the new item before the closing </channel> tag
         python3 - <<PYEOF
-import re, sys
-with open('docs/appcast.xml', 'r') as f:
-    content = f.read()
-new_item = """${NEW_ITEM}"""
-content = content.replace('  </channel>', new_item + '\n\n  </channel>')
-with open('docs/appcast.xml', 'w') as f:
-    f.write(content)
-print("✅ appcast.xml updated")
-PYEOF
+        import re, sys
+        with open('docs/appcast.xml', 'r') as f:
+            content = f.read()
+        new_item = """${NEW_ITEM}"""
+        content = content.replace('  </channel>', new_item + '\n\n  </channel>')
+        with open('docs/appcast.xml', 'w') as f:
+            f.write(content)
+        print("✅ appcast.xml updated")
+        PYEOF
 
     - name: Commit updated appcast
       run: |
