@@ -5,6 +5,7 @@ import Combine
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settings: AppSettingsStore!
     private var conversionManager: ConversionManager!
+    private var updaterService: UpdaterService!
 
     private var dropWindowController: DropWindowController!
     private var preferencesWindowController: PreferencesWindowController!
@@ -15,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         settings = AppSettingsStore()
         conversionManager = ConversionManager(settings: settings)
+        updaterService = UpdaterService()
 
         dropWindowController = DropWindowController(conversionManager: conversionManager)
         preferencesWindowController = PreferencesWindowController(settings: settings)
@@ -29,6 +31,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             convertViaPicker: { [weak self] in
                 self?.openFilePickerAndConvert()
+            },
+            checkForUpdates: { [weak self] in
+                self?.updaterService.checkForUpdates()
             }
         )
 

@@ -8,9 +8,16 @@ let package = Package(
     platforms: [
         .macOS(.v13)
     ],
+    dependencies: [
+        .package(
+            url: "https://github.com/sparkle-project/Sparkle",
+            from: "2.9.1"
+        )
+    ],
     targets: [
         .executableTarget(
             name: "MarkitdownUI",
+            dependencies: ["Sparkle"],
             exclude: [
                 "Resources/AppIcon.iconset"
             ],

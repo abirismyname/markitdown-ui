@@ -132,3 +132,114 @@ jobs:
         prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-appcast:
+    name: Update Appcast
+    needs: [build-and-notarize, create-release]
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v5
+      with:
+        ref: main
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Download release artifacts
+      uses: actions/download-artifact@v7
+      with:
+        name: release-artifacts
+        path: /tmp/release-artifacts
+
+    - name: Resolve DMG path
+      id: dmg
+      run: |
+        DMG_NAME="${{ needs.build-and-notarize.outputs.dmg_name }}"
+        DMG_PATH=$(find /tmp/release-artifacts -name "$DMG_NAME" | head -1)
+        echo "path=$DMG_PATH" >> "$GITHUB_OUTPUT"
+        echo "Using DMG: $DMG_PATH"
+
+    - name: Get version
+      id: version
+      run: |
+        if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+          TAG="${{ inputs.tag }}"
+        else
+          TAG="${GITHUB_REF#refs/tags/}"
+        fi
+        TAG="${TAG#v}"
+        echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+    - name: Download Sparkle tools
+      run: |
+        SPARKLE_VERSION="2.9.1"
+        curl -fsSL \
+          "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz" \
+          -o /tmp/sparkle.tar.xz
+        mkdir -p /tmp/sparkle-tools
+        tar -xf /tmp/sparkle.tar.xz -C /tmp/sparkle-tools ./bin/sign_update
+        chmod +x /tmp/sparkle-tools/bin/sign_update
+
+    - name: Sign DMG and update appcast
+      env:
+        SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        DMG_PATH: ${{ steps.dmg.outputs.path }}
+        VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        if [[ -z "${SPARKLE_ED_PRIVATE_KEY}" ]]; then
+          echo "⚠️  SPARKLE_ED_PRIVATE_KEY secret not set — skipping appcast update."
+          echo "   See README.md § 'Sparkle Update Keys' to set this up."
+          exit 0
+        fi
+
+        DMG_SIZE=$(stat -f%z "${DMG_PATH}")
+        DOWNLOAD_URL="https://github.com/abirismyname/markymarkdown/releases/download/v${VERSION}/$(basename "${DMG_PATH}")"
+        PUB_DATE=$(date -R)
+
+        # Generate EdDSA signature
+        ED_SIGNATURE=$(echo "${SPARKLE_ED_PRIVATE_KEY}" \
+          | /tmp/sparkle-tools/bin/sign_update "${DMG_PATH}" --ed-key-file -)
+
+        NEW_ITEM=$(cat <<ITEM
+    <item>
+      <title>Version ${VERSION}</title>
+      <pubDate>${PUB_DATE}</pubDate>
+      <sparkle:releaseNotesLink>
+        https://github.com/abirismyname/markymarkdown/releases/tag/v${VERSION}
+      </sparkle:releaseNotesLink>
+      <enclosure
+        url="${DOWNLOAD_URL}"
+        sparkle:version="${VERSION}"
+        sparkle:shortVersionString="${VERSION}"
+        length="${DMG_SIZE}"
+        type="application/octet-stream"
+        sparkle:edSignature="${ED_SIGNATURE}" />
+    </item>
+ITEM
+        )
+
+        # Insert the new item before the closing </channel> tag
+        python3 - <<PYEOF
+import re, sys
+with open('docs/appcast.xml', 'r') as f:
+    content = f.read()
+new_item = """${NEW_ITEM}"""
+content = content.replace('  </channel>', new_item + '\n\n  </channel>')
+with open('docs/appcast.xml', 'w') as f:
+    f.write(content)
+print("✅ appcast.xml updated")
+PYEOF
+
+    - name: Commit updated appcast
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        if git diff --quiet docs/appcast.xml; then
+          echo "ℹ️  No appcast changes to commit (SPARKLE_ED_PRIVATE_KEY may not be set)."
+        else
+          git add docs/appcast.xml
+          git commit -m "chore: update appcast for v${{ steps.version.outputs.version }}"
+          git push origin main
+          echo "✅ appcast.xml committed and pushed"
+        fi

@@ -23,6 +23,14 @@ else
 	ENABLE_CODE_SIGNING=false
 	echo "⚠️  Signing identity '${SIGNING_IDENTITY}' not found in keychain — code signing will be skipped."
 fi
+
+# Sparkle update key — set via CI secret SPARKLE_PUBLIC_ED_KEY.
+# Generate once with: .build/artifacts/.../Sparkle.xcframework/.../bin/generate_keys
+# See README.md § "Sparkle Update Keys" for full instructions.
+SPARKLE_PUBLIC_ED_KEY="${SPARKLE_PUBLIC_ED_KEY:-}"
+
+# Entitlements file required by hardened runtime when Sparkle (a third-party framework) is embedded.
+ENTITLEMENTS_PATH="MarkyMarkdown.entitlements"
 MARKITDOWN_ENTRY_SCRIPT="${MARKITDOWN_STANDALONE_DIR}/markitdown_entry.py"
 MARKITDOWN_DIST_BINARY="${MARKITDOWN_STANDALONE_DIR}/dist/markitdown/markitdown"
 INSTALLER_BACKGROUND_SRC="installer-background.png"
@@ -115,6 +123,27 @@ fi
 # Copy app icon
 cp "Sources/MarkitdownUI/Resources/AppIcon.icns" "${APP_BUNDLE_PATH}/Contents/Resources/"
 
+# Embed Sparkle.framework
+echo "🔗 Embedding Sparkle framework..."
+SPARKLE_XCFRAMEWORK=$(find ".build/artifacts" -name "Sparkle.xcframework" -type d 2>/dev/null | head -1)
+if [[ -z "${SPARKLE_XCFRAMEWORK}" ]]; then
+	echo "❌ Sparkle.xcframework not found in .build/artifacts. Ensure 'swift build' ran successfully."
+	exit 1
+fi
+SPARKLE_MACOS_FRAMEWORK=$(find "${SPARKLE_XCFRAMEWORK}" -name "Sparkle.framework" -maxdepth 2 -type d | head -1)
+if [[ -z "${SPARKLE_MACOS_FRAMEWORK}" ]]; then
+	echo "❌ Sparkle.framework slice not found inside ${SPARKLE_XCFRAMEWORK}."
+	exit 1
+fi
+mkdir -p "${APP_BUNDLE_PATH}/Contents/Frameworks"
+cp -r "${SPARKLE_MACOS_FRAMEWORK}" "${APP_BUNDLE_PATH}/Contents/Frameworks/"
+echo "✅ Sparkle.framework embedded"
+
+# Ensure the main binary resolves Sparkle at its bundled location at runtime.
+install_name_tool -add_rpath "@executable_path/../Frameworks" \
+	"${APP_BUNDLE_PATH}/Contents/MacOS/${APP_NAME}" 2>/dev/null || true
+echo "✅ rpath updated for Sparkle"
+
 # Create Info.plist
 cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -149,6 +178,10 @@ cat > "${APP_BUNDLE_PATH}/Contents/Info.plist" << EOF
 	<string>Copyright © 2026. All rights reserved.</string>
 	<key>NSRequiresIPhoneOS</key>
 	<false/>
+	<key>SUFeedURL</key>
+	<string>https://abirismyname.github.io/markymarkdown/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>${SPARKLE_PUBLIC_ED_KEY}</string>
 </dict>
 </plist>
 EOF
@@ -181,9 +214,42 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 	fi
 	
 	MARKITDOWN_RESOURCES="${APP_BUNDLE_PATH}/Contents/Resources/markitdown"
+	SPARKLE_FRAMEWORK_IN_BUNDLE="${APP_BUNDLE_PATH}/Contents/Frameworks/Sparkle.framework"
 	DYLIB_COUNT=0
 	SO_COUNT=0
 	BIN_COUNT=0
+
+	# Sign Sparkle.framework (inner-to-outer: nested XPC services and helpers first)
+	if [[ -d "${SPARKLE_FRAMEWORK_IN_BUNDLE}" ]]; then
+		echo "  Signing Sparkle framework internals..."
+
+		# Sign XPC service bundles
+		find "${SPARKLE_FRAMEWORK_IN_BUNDLE}" -name "*.xpc" -type d | sort -r | while read -r xpc_bundle; do
+			echo "    Signing XPC service: ${xpc_bundle}"
+			codesign -s "${SIGNING_IDENTITY}" --force --options runtime --timestamp "${xpc_bundle}"
+		done
+
+		# Sign other Mach-O executables inside the framework (helpers, etc.)
+		# Exclude files that live inside .xpc bundles — those are handled by signing
+		# the bundle as a whole in the step above.
+		find "${SPARKLE_FRAMEWORK_IN_BUNDLE}" -type f -perm -111 \
+			-not -path "*/*.xpc/*" | while read -r bin_file; do
+			if file -b "$bin_file" 2>/dev/null | grep -q "Mach-O"; then
+				sign_binary "$bin_file"
+			fi
+		done
+
+		# Sign dylibs inside the framework (also excluding those inside .xpc bundles)
+		find "${SPARKLE_FRAMEWORK_IN_BUNDLE}" -type f -name "*.dylib" \
+			-not -path "*/*.xpc/*" | while read -r dylib; do
+			sign_binary "$dylib"
+		done
+
+		# Sign the framework bundle itself
+		echo "  Signing Sparkle.framework bundle..."
+		codesign -s "${SIGNING_IDENTITY}" --force --options runtime --timestamp "${SPARKLE_FRAMEWORK_IN_BUNDLE}"
+		echo "  ✓ Sparkle.framework signed"
+	fi
 	
 	# Sign all dylibs and extension modules in the bundled Python runtime
 	if [[ -d "${MARKITDOWN_RESOURCES}/_internal" ]]; then
@@ -248,9 +314,11 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 		echo "  ✓ MarkItDown binary signed"
 	fi
 	
-	# Sign the Swift executable
+	# Sign the Swift executable with entitlements (needed for hardened runtime + Sparkle)
 	echo "  Signing Swift executable..."
-	sign_binary "${APP_BUNDLE_PATH}/Contents/MacOS/MarkyMarkdown"
+	codesign -s "${SIGNING_IDENTITY}" --force --options runtime --timestamp \
+		--entitlements "${ENTITLEMENTS_PATH}" \
+		"${APP_BUNDLE_PATH}/Contents/MacOS/MarkyMarkdown"
 	
 	# Sign the app bundle container (without --deep) after nested code is already signed.
 	echo "  Signing app bundle..."
