@@ -136,7 +136,14 @@ if [[ -z "${SPARKLE_MACOS_FRAMEWORK}" ]]; then
 	exit 1
 fi
 mkdir -p "${APP_BUNDLE_PATH}/Contents/Frameworks"
-cp -r "${SPARKLE_MACOS_FRAMEWORK}" "${APP_BUNDLE_PATH}/Contents/Frameworks/"
+# Use ditto instead of cp -r to preserve symlinks inside Sparkle.framework.
+# On macOS, cp -r dereferences symlinks (acts like -L), so Versions/Current/ becomes
+# a real directory copy and Sparkle.framework/Sparkle becomes a regular file.  That
+# breaks the versioned-bundle structure and causes codesign to fail with
+# "bundle format is ambiguous (could be app or framework)" when it encounters the
+# root-level Sparkle binary.  ditto preserves symlinks, keeping the canonical
+# Versions/Current → B layout intact so codesign can navigate the bundle correctly.
+ditto "${SPARKLE_MACOS_FRAMEWORK}" "${APP_BUNDLE_PATH}/Contents/Frameworks/Sparkle.framework"
 echo "✅ Sparkle.framework embedded"
 
 # Ensure the main binary resolves Sparkle at its bundled location at runtime.
