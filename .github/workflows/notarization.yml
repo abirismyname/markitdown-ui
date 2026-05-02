@@ -45,6 +45,8 @@ on:
         required: true
       NOTARIZATION_PWD:
         required: true
+      SPARKLE_PUBLIC_ED_KEY:
+        required: false
   workflow_dispatch:
     inputs:
       ref:
@@ -212,6 +214,7 @@ jobs:
           PYTHON_CMD: ${{ env.PYTHON_CMD }}
           SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
           APP_VERSION: ${{ steps.app_version.outputs.version }}
+          SPARKLE_PUBLIC_ED_KEY: ${{ secrets.SPARKLE_PUBLIC_ED_KEY }}
         run: bash build-dmg.sh
 
       - name: Resolve DMG path
