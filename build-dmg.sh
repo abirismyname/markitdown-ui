@@ -232,8 +232,12 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 		# Sign other Mach-O executables inside the framework (helpers, etc.)
 		# Exclude files that live inside .xpc bundles — those are handled by signing
 		# the bundle as a whole in the step above.
+		# Also exclude the top-level Sparkle binary (Sparkle.framework/Sparkle) because
+		# codesign reports "bundle format is ambiguous" when the file shares the bundle name;
+		# it is covered by signing the framework bundle as a whole below.
 		find "${SPARKLE_FRAMEWORK_IN_BUNDLE}" -type f -perm -111 \
-			-not -path "*/*.xpc/*" | while read -r bin_file; do
+			-not -path "*/*.xpc/*" \
+			-not -path "${SPARKLE_FRAMEWORK_IN_BUNDLE}/Sparkle" | while read -r bin_file; do
 			if file -b "$bin_file" 2>/dev/null | grep -q "Mach-O"; then
 				sign_binary "$bin_file"
 			fi
