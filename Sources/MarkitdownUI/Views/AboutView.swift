@@ -39,18 +39,17 @@ struct AboutView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Acknowledgements")
                     .font(.headline)
-                Text("MarkItDown is © Microsoft Corporation, used under the MIT License.")
+                Text("MarkItDown © Microsoft Corporation — MIT License")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons and to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Link("Full license notice (ACKNOWLEDGEMENTS.md)",
+                     destination: URL(string: "https://github.com/abirismyname/markymarkdown/blob/main/ACKNOWLEDGEMENTS.md")!)
+                    .font(.caption)
             }
 
             Spacer()
         }
         .padding(20)
-        .frame(width: 560, height: 540)
+        .frame(width: 560, height: 480)
     }
 }
