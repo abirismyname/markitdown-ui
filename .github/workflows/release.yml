@@ -92,9 +92,10 @@ jobs:
           exit 1
         fi
 
+        # Normalize: add 'v' prefix if missing
         if [[ "${TAG}" != v* ]]; then
-          echo "❌ Release tag must start with 'v' (for example: v1.2.3)"
-          exit 1
+          echo "⚠️  Tag '${TAG}' is missing the 'v' prefix — normalizing to 'v${TAG}'"
+          TAG="v${TAG}"
         fi
 
         echo "TAG=${TAG}" >> $GITHUB_OUTPUT
