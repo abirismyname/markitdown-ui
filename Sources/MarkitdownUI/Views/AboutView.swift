@@ -13,8 +13,13 @@ struct AboutView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("About MarkyMarkdown")
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("About MarkyMarkdown")
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                Text("v\(Bundle.main.appVersion)")
+                    .font(.system(size: 13, weight: .regular, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
 
             Text("MarkyMarkdown uses the MarkItDown CLI to convert documents into clean Markdown output.")
                 .font(.body)
