@@ -7,6 +7,10 @@ on:
         description: Git ref (branch, tag, or SHA) to test
         required: false
         type: string
+      app_version:
+        description: Explicit app version (e.g. 1.1.9). Overrides version derived from ref.
+        required: false
+        type: string
       staple:
         description: Staple ticket when notarization succeeds
         required: false
@@ -187,11 +191,18 @@ jobs:
       - name: Derive app version from ref
         id: app_version
         run: |
-          REF="${{ inputs.ref || github.ref }}"
-          if [[ "$REF" =~ ^(refs/tags/)?v([0-9]+\.[0-9]+\.[0-9]+.*)$ ]]; then
-            VERSION="${BASH_REMATCH[2]}"
+          # Use an explicitly provided version first (strips leading 'v' if present).
+          if [[ -n "${{ inputs.app_version }}" ]]; then
+            VERSION="${{ inputs.app_version }}"
+            VERSION="${VERSION#v}"
           else
-            VERSION="1.1.1"
+            REF="${{ inputs.ref || github.ref }}"
+            if [[ "$REF" =~ ^(refs/tags/)?v([0-9]+\.[0-9]+\.[0-9]+.*)$ ]]; then
+              VERSION="${BASH_REMATCH[2]}"
+            else
+              echo "❌ Could not derive version from ref '${REF}'. Pass app_version explicitly."
+              exit 1
+            fi
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building version: $VERSION"
