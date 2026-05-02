@@ -40,6 +40,8 @@ struct DropZoneView: View {
     @State private var confettiTrigger: Int = 0
     @State private var spinAngle: Double = 0
 
+    private let spinAnimationDuration: Double = 2.0
+
     var body: some View {
         ZStack {
             LinearGradient(
@@ -151,7 +153,7 @@ struct DropZoneView: View {
                     .rotationEffect(.degrees(spinAngle))
                     .onAppear {
                         spinAngle = 0
-                        withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
+                        withAnimation(.linear(duration: spinAnimationDuration).repeatForever(autoreverses: false)) {
                             spinAngle = 360
                         }
                     }

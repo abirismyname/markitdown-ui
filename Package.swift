@@ -9,8 +9,8 @@ let package = Package(
         .macOS(.v13)
     ],
     dependencies: [
-        .package(url: "https://github.com/simibac/ConfettiSwiftUI.git", from: "1.0.0"),
-        .package(url: "https://github.com/twostraws/Vortex.git", from: "1.0.0"),
+        .package(url: "https://github.com/simibac/ConfettiSwiftUI.git", .upToNextMinor(from: "1.1.0")),
+        .package(url: "https://github.com/twostraws/Vortex.git", .upToNextMinor(from: "1.0.4")),
     ],
     targets: [
         .executableTarget(
