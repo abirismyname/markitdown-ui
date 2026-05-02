@@ -34,9 +34,22 @@ struct AboutView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
+            Divider()
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Acknowledgements")
+                    .font(.headline)
+                Text("MarkItDown © Microsoft Corporation — MIT License")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Link("Full license notice (ACKNOWLEDGEMENTS.md)",
+                     destination: URL(string: "https://github.com/abirismyname/markymarkdown/blob/main/ACKNOWLEDGEMENTS.md")!)
+                    .font(.caption)
+            }
+
             Spacer()
         }
         .padding(20)
-        .frame(width: 560, height: 440)
+        .frame(width: 560, height: 480)
     }
 }
