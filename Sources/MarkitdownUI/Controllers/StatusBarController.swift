@@ -11,17 +11,21 @@ final class StatusBarController {
     private var menu: NSMenu?
     private var dropView: StatusBarDropView?
 
+    private let checkForUpdates: () -> Void
+
     init(
         conversionManager: ConversionManager,
         openMainWindow: @escaping () -> Void,
         openPreferences: @escaping () -> Void,
-        convertViaPicker: @escaping () -> Void
+        convertViaPicker: @escaping () -> Void,
+        checkForUpdates: @escaping () -> Void
     ) {
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.conversionManager = conversionManager
         self.openMainWindow = openMainWindow
         self.openPreferences = openPreferences
         self.convertViaPicker = convertViaPicker
+        self.checkForUpdates = checkForUpdates
 
         configure()
     }
@@ -58,6 +62,8 @@ final class StatusBarController {
         menu.addItem(NSMenuItem(title: "Open Drop Window", action: #selector(handleOpenWindow), keyEquivalent: "o"))
         menu.addItem(NSMenuItem(title: "Convert File…", action: #selector(handleConvertPicker), keyEquivalent: "c"))
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Check for Updates…", action: #selector(handleCheckForUpdates), keyEquivalent: "u"))
+        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Preferences…", action: #selector(handlePreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(handleQuit), keyEquivalent: "q"))
@@ -74,6 +80,11 @@ final class StatusBarController {
         }
         button.addSubview(dropView)
         self.dropView = dropView
+    }
+
+    @objc
+    private func handleCheckForUpdates() {
+        checkForUpdates()
     }
 
     @objc
