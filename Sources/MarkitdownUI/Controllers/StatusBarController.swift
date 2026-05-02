@@ -55,6 +55,10 @@ final class StatusBarController {
         button.imagePosition = .imageOnly
 
         let menu = NSMenu()
+        let versionItem = NSMenuItem(title: "MarkyMarkdown v\(Bundle.main.appVersion)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        menu.addItem(versionItem)
+        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Open Drop Window", action: #selector(handleOpenWindow), keyEquivalent: "o"))
         menu.addItem(NSMenuItem(title: "Convert File…", action: #selector(handleConvertPicker), keyEquivalent: "c"))
         menu.addItem(NSMenuItem.separator())
