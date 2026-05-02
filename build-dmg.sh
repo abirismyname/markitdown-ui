@@ -230,15 +230,18 @@ if [[ "${ENABLE_CODE_SIGNING}" == "true" ]]; then
 		done
 
 		# Sign other Mach-O executables inside the framework (helpers, etc.)
+		# Exclude files that live inside .xpc bundles — those are handled by signing
+		# the bundle as a whole in the step above.
 		find "${SPARKLE_FRAMEWORK_IN_BUNDLE}" -type f -perm -111 \
-			! -name "*.xpc" | while read -r bin_file; do
+			-not -path "*/*.xpc/*" | while read -r bin_file; do
 			if file -b "$bin_file" 2>/dev/null | grep -q "Mach-O"; then
 				sign_binary "$bin_file"
 			fi
 		done
 
-		# Sign dylibs inside the framework
-		find "${SPARKLE_FRAMEWORK_IN_BUNDLE}" -type f -name "*.dylib" | while read -r dylib; do
+		# Sign dylibs inside the framework (also excluding those inside .xpc bundles)
+		find "${SPARKLE_FRAMEWORK_IN_BUNDLE}" -type f -name "*.dylib" \
+			-not -path "*/*.xpc/*" | while read -r dylib; do
 			sign_binary "$dylib"
 		done
 
