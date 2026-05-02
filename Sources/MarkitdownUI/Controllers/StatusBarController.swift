@@ -1,4 +1,5 @@
 import AppKit
+import QuartzCore
 
 @MainActor
 final class StatusBarController {
@@ -36,6 +37,17 @@ final class StatusBarController {
             button.image = NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: "Converting your file with markdown magic! ✨")
         case .success:
             button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Success! File converted beautifully! 🎊")
+            // Brief scale pulse to celebrate the successful conversion
+            button.wantsLayer = true
+            if let layer = button.layer {
+                let pulse = CABasicAnimation(keyPath: "transform.scale")
+                pulse.fromValue = 1.0
+                pulse.toValue = 1.35
+                pulse.duration = 0.15
+                pulse.autoreverses = true
+                pulse.repeatCount = 2
+                layer.add(pulse, forKey: "successPulse")
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
                 self?.updateForState(.idle)
             }

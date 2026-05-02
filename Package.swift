@@ -8,9 +8,17 @@ let package = Package(
     platforms: [
         .macOS(.v13)
     ],
+    dependencies: [
+        .package(url: "https://github.com/simibac/ConfettiSwiftUI.git", from: "1.0.0"),
+        .package(url: "https://github.com/twostraws/Vortex.git", from: "1.0.0"),
+    ],
     targets: [
         .executableTarget(
             name: "MarkitdownUI",
+            dependencies: [
+                .product(name: "ConfettiSwiftUI", package: "ConfettiSwiftUI"),
+                .product(name: "Vortex", package: "Vortex"),
+            ],
             exclude: [
                 "Resources/AppIcon.iconset"
             ],
