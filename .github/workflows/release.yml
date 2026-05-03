@@ -256,11 +256,16 @@ jobs:
           git checkout -b "$BRANCH"
           git add docs/appcast.xml
           git commit -m "chore: update appcast for v${VERSION}"
-          git push origin "$BRANCH"
-          gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "chore: update appcast for v${VERSION}" \
-            --body "Automated appcast update for release v${VERSION}."
-          echo "✅ appcast.xml PR created for branch $BRANCH"
+          git push --force-with-lease origin "$BRANCH"
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --base main --json number --jq 'length')
+          if [[ "$EXISTING_PR" -eq 0 ]]; then
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore: update appcast for v${VERSION}" \
+              --body "Automated appcast update for release v${VERSION}."
+            echo "✅ appcast.xml PR created for branch $BRANCH"
+          else
+            echo "ℹ️  PR already exists for branch $BRANCH — branch updated."
+          fi
         fi
