@@ -32,5 +32,20 @@
       </item>
     -->
 
+<item>
+  <title>Version 1.1.13</title>
+  <pubDate>Sun, 03 May 2026 02:42:34 +0000</pubDate>
+  <sparkle:releaseNotesLink>
+    https://github.com/abirismyname/markymarkdown/releases/tag/v1.1.13
+  </sparkle:releaseNotesLink>
+  <enclosure
+    url="https://github.com/abirismyname/markymarkdown/releases/download/v1.1.13/MarkyMarkdown-1.1.13.dmg"
+    sparkle:version="1.1.13"
+    sparkle:shortVersionString="1.1.13"
+    length="88999720"
+    type="application/octet-stream"
+    sparkle:edSignature="sparkle:edSignature="RTk1A5zovkSel0MlAfwqV9lsdU+f8/O5b0gSUoXo0eew/sDnkH9X0m8aDpXkyOxjEz2YSJfomJ68PL/TITuxDQ==" length="88999720"" />
+</item>
+
   </channel>
 </rss>
