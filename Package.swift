@@ -10,14 +10,12 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/simibac/ConfettiSwiftUI.git", .upToNextMinor(from: "1.1.0")),
-        .package(url: "https://github.com/twostraws/Vortex.git", .upToNextMinor(from: "1.0.4")),
     ],
     targets: [
         .executableTarget(
             name: "MarkitdownUI",
             dependencies: [
                 .product(name: "ConfettiSwiftUI", package: "ConfettiSwiftUI"),
-                .product(name: "Vortex", package: "Vortex"),
             ],
             exclude: [
                 "Resources/AppIcon.iconset"

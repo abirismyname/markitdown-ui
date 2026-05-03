@@ -1,7 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import ConfettiSwiftUI
-import Vortex
 
 private let celebrationMessages = [
     "✨ Magic complete! ✨",
@@ -81,19 +80,6 @@ struct DropZoneView: View {
                                     .foregroundStyle(Color.white.opacity(0.8))
                                     .font(.system(size: 13))
                             }
-
-                            // Sparkle aura while a file is hovering over the drop zone
-                            if isTargeted {
-                                VortexView(.spark) {
-                                    Circle()
-                                        .fill(.white)
-                                        .frame(width: 8)
-                                        .blendMode(.plusLighter)
-                                        .tag("circle")
-                                }
-                                .allowsHitTesting(false)
-                                .accessibilityHidden(true)
-                            }
                         }
                     }
                     .onDrop(of: [UTType.fileURL], isTargeted: $isTargeted) { providers in
@@ -104,21 +90,6 @@ struct DropZoneView: View {
             }
             .padding(.vertical, 28)
             .padding(.horizontal, 24)
-
-            // Milestone fireworks — shown for the 2 seconds that milestoneCelebration is non-nil
-            if conversionManager.milestoneCelebration != nil {
-                VortexView(.fireworks) {
-                    Circle()
-                        .fill(.white)
-                        .frame(width: 32)
-                        .blur(radius: 5)
-                        .blendMode(.plusLighter)
-                        .tag("circle")
-                }
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-            }
         }
         .frame(minWidth: 560, minHeight: 420)
         .animation(.easeInOut(duration: 0.2), value: isTargeted)
@@ -126,7 +97,7 @@ struct DropZoneView: View {
         .animation(.easeInOut(duration: 0.4), value: conversionManager.milestoneCelebration != nil)
         // Confetti burst fired on every successful conversion
         .confettiCannon(
-            trigger: $confettiTrigger,
+            counter: $confettiTrigger,
             confettis: [.text("✨"), .text("🎉"), .shape(.circle), .shape(.triangle)],
             colors: [.green, .cyan, .white, .yellow],
             openingAngle: .degrees(60),
