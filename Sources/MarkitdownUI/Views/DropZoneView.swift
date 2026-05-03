@@ -34,6 +34,8 @@ func playfulErrorMessage(_ original: String) -> String {
 struct DropZoneView: View {
     @ObservedObject var conversionManager: ConversionManager
 
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var isTargeted = false
     @State private var celebrationMessage = ""
     @State private var confettiTrigger: Int = 0
@@ -42,28 +44,40 @@ struct DropZoneView: View {
 
     private let spinAnimationDuration: Double = 2.0
 
-    var body: some View {
-        ZStack {
-            LinearGradient(
+    private var backgroundGradient: LinearGradient {
+        if colorScheme == .dark {
+            return LinearGradient(
                 colors: [Color(red: 0.08, green: 0.11, blue: 0.16), Color(red: 0.12, green: 0.16, blue: 0.22)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+        } else {
+            return LinearGradient(
+                colors: [Color(red: 0.94, green: 0.96, blue: 0.99), Color(red: 0.88, green: 0.92, blue: 0.97)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            backgroundGradient
             .ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Text("MarkyMarkdown")
                     .font(.system(size: 28, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
 
                 RoundedRectangle(cornerRadius: 20)
                     .strokeBorder(
                         style: StrokeStyle(lineWidth: isTargeted ? 3 : 1.5, dash: [8])
                     )
-                    .foregroundStyle(isTargeted ? Color.cyan : Color.white.opacity(0.5))
+                    .foregroundStyle(isTargeted ? Color.cyan : Color.primary.opacity(0.5))
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(isTargeted ? 0.14 : 0.08))
+                            .fill(Color.primary.opacity(isTargeted ? 0.14 : 0.08))
                     )
                     .frame(width: 420, height: 220)
                     .overlay {
@@ -71,14 +85,14 @@ struct DropZoneView: View {
                             VStack(spacing: 10) {
                                 Image(systemName: "square.and.arrow.down.on.square")
                                     .font(.system(size: 34, weight: .regular))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(.primary)
 
                                 Text("Drop a file to convert")
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(.primary)
                                     .font(.system(size: 18, weight: .medium))
 
                                 Text("Markdown will be created in the same folder")
-                                    .foregroundStyle(Color.white.opacity(0.8))
+                                    .foregroundStyle(.secondary)
                                     .font(.system(size: 13))
                             }
                         }
@@ -112,7 +126,7 @@ struct DropZoneView: View {
         switch conversionManager.state {
         case .idle:
             Text("Ready to work magic ✨")
-                .foregroundStyle(Color.white.opacity(0.7))
+                .foregroundStyle(.secondary)
                 .font(.system(size: 13))
         case let .converting(fileName):
             let _ = { showErrorDetails = false }()
@@ -131,7 +145,7 @@ struct DropZoneView: View {
                         }
                     }
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
             .font(.system(size: 13, weight: .medium))
         case let .success(outputURL):
             VStack(spacing: 8) {
