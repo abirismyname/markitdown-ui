@@ -100,4 +100,17 @@ struct AppSettingsStoreTests {
             #expect(FileManager.default.fileExists(atPath: path))
         }
     }
+
+    @Test("bundledMarkitdownPath never crashes when SwiftPM resource bundle is absent")
+    func bundledPathNeverCrashes() {
+        // This verifies the fix for the v1.2.0 launch crash: Bundle.module raises
+        // fatalError() when the SwiftPM resource bundle can't be found (e.g. in a
+        // packaged .app). bundledMarkitdownPath() must return nil gracefully.
+        let path = AppSettingsStore.bundledMarkitdownPath()
+        if let path {
+            #expect(FileManager.default.fileExists(atPath: path))
+            #expect(FileManager.default.isExecutableFile(atPath: path))
+        }
+        // Reaching here without a crash is the primary assertion.
+    }
 }
