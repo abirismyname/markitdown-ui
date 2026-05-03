@@ -107,7 +107,7 @@ chmod +x Sources/MarkitdownUI/Resources/markitdown
 5. **Bundled MarkItDown** - No separate installation needed
 6. **Automatic .md naming** - Output in same folder as source
 7. **Collision handling** - Creates `file (1).md` if needed
-8. **Preferences** - CLI path and keep-data-uris toggle
+8. **Preferences** - CLI path and embed-assets-as-data-URLs toggle
 9. **Live status** - Menu bar icon shows conversion state
 10. **Reveal in Finder** - Quick access to converted files
 

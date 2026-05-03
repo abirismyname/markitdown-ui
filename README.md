@@ -18,7 +18,7 @@ A native macOS menu bar application that provides a joyful, delightful interface
 - **🤔 Playful Error Guidance**: Context-aware, encouraging messages when issues occur
 - **💾 Smart File Handling**: Markdown files generated in the same folder with automatic collision handling
 - **🔥 Zero Prerequisites**: Bundled MarkItDown CLI with complete Python 3.11 runtime—nothing to install
-- **⚙️ Preferences**: Customize CLI path and output options (keep data URIs)
+- **⚙️ Preferences**: Customize CLI path and output options (embed assets as data URLs)
 - **📁 File Picker Fallback**: Use "Convert File…" menu option for convenient file selection
 
 ## Installation
@@ -79,7 +79,7 @@ cd /path/to/markymarkdown
 Click the menu bar icon and select "Preferences…" to customize:
 
 - **MarkItDown CLI Path**: Override the bundled CLI with your own (if needed)
-- **Keep Data URIs**: Preserve embedded images in output (rather than stripping them)
+- **Embed assets as data URLs (self-contained output)**: When enabled, images/assets remain embedded as `data:` URLs so the output works offline and in a single file. This can significantly increase output size and may be blocked by some security policies.
 
 ## Automatic Updates
 

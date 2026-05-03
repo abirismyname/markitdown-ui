@@ -30,7 +30,13 @@ struct PreferencesView: View {
                 }
             }
 
-            Toggle("Keep data URIs in output", isOn: $settings.keepDataURIs)
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle("Embed assets as data URLs (self-contained output)", isOn: $settings.keepDataURIs)
+                Text("When enabled, images/assets remain embedded as data: URLs so the output works offline and in a single file. This can significantly increase output size and may be blocked by some security policies.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             HStack {
                 Text("Color Scheme")

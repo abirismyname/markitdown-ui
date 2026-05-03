@@ -17,7 +17,7 @@ The DMG contains:
 - **MarkItDown.app** - Complete macOS application with:
   - Menu bar integration (LSUIElement)
   - Drag-and-drop UI window
-  - Preferences (CLI path, keep-data-uris toggle)
+  - Preferences (CLI path, embed-assets-as-data-URLs toggle)
   - **Bundled MarkItDown CLI binary** (no separate installation needed)
   - All resources and configurations
 
