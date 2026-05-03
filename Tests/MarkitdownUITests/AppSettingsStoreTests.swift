@@ -100,4 +100,19 @@ struct AppSettingsStoreTests {
             #expect(FileManager.default.fileExists(atPath: path))
         }
     }
+
+    @Test("bundledMarkitdownPath never crashes when SwiftPM resource bundle is absent")
+    func bundledPathNeverCrashes() {
+        // Regression test for v1.2.0 launch crash: Bundle.module raised fatalError() when
+        // the SwiftPM resource bundle was absent in a packaged .app. The fix replaces the
+        // direct Bundle.module call with safeModuleBundle() which returns nil instead.
+        // Simply reaching the end of this test without a crash validates the fix.
+        let path = AppSettingsStore.bundledMarkitdownPath()
+        if let path {
+            // If a path was found it must point to a real, executable file.
+            #expect(FileManager.default.fileExists(atPath: path))
+            #expect(FileManager.default.isExecutableFile(atPath: path))
+        }
+        // nil is the expected result in test environments where the CLI binary is absent.
+    }
 }
