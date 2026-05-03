@@ -197,9 +197,19 @@ jobs:
         DOWNLOAD_URL="https://github.com/abirismyname/markymarkdown/releases/download/v${VERSION}/$(basename "${DMG_PATH}")"
         PUB_DATE=$(date -R)
 
+        # Write private key to a temp file — macOS sign_update does not accept
+        # "-" as a stdin alias for --ed-key-file, so a real path is required.
+        SPARKLE_KEY_FILE=$(mktemp)
+        chmod 600 "$SPARKLE_KEY_FILE"
+        printf '%s' "${SPARKLE_ED_PRIVATE_KEY}" > "$SPARKLE_KEY_FILE"
+
         # Generate EdDSA signature
-        ED_SIGNATURE=$(echo "${SPARKLE_ED_PRIVATE_KEY}" \
-          | /tmp/sparkle-tools/bin/sign_update "${DMG_PATH}" --ed-key-file -)
+        if ! ED_SIGNATURE=$(/tmp/sparkle-tools/bin/sign_update "${DMG_PATH}" --ed-key-file "$SPARKLE_KEY_FILE"); then
+          rm -f "$SPARKLE_KEY_FILE"
+          echo "❌ sign_update failed — verify that SPARKLE_ED_PRIVATE_KEY is a valid EdDSA private key."
+          exit 1
+        fi
+        rm -f "$SPARKLE_KEY_FILE"
 
         NEW_ITEM=$(cat <<ITEM
         <item>
