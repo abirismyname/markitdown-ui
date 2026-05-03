@@ -81,6 +81,99 @@ Click the menu bar icon and select "Preferences…" to customize:
 - **MarkItDown CLI Path**: Override the bundled CLI with your own (if needed)
 - **Keep Data URIs**: Preserve embedded images in output (rather than stripping them)
 
+## Automatic Updates
+
+MarkyMarkdown uses **[Sparkle](https://sparkle-project.org)** to deliver updates automatically so you're always running the latest version.
+
+### How it works
+
+1. On launch (and periodically in the background) the app silently checks the [appcast feed](https://abirismyname.github.io/markymarkdown/appcast.xml) for a newer version.
+2. When an update is found a native macOS dialog asks whether to install it now or later.
+3. Sparkle downloads the new DMG, verifies its **EdDSA signature**, and relaunches the app—no manual steps required.
+
+You can also trigger a check yourself at any time: click the menu bar icon and choose **"Check for Updates…"**.
+
+Every DMG published in GitHub Releases is signed with a private EdDSA key; the matching public key is embedded in the app bundle (`SUPublicEDKey` in `Info.plist`). If the signature does not verify Sparkle refuses to install the update, protecting you from tampered downloads.
+
+### Sparkle Update Keys (for maintainers)
+
+Before publishing a release that delivers updates you must generate a key pair once and configure it in CI.
+
+**1. Generate the key pair**
+
+```bash
+# Build the app once so Sparkle's CLI tools are extracted into .build/artifacts/
+swift build --configuration release
+
+# Locate Sparkle's generate_keys tool
+SPARKLE_BIN=$(find .build/artifacts -name "generate_keys" 2>/dev/null | head -1)
+
+# Generate a new Ed25519 key pair; the tool prints the public key and stores
+# the private key in macOS Keychain under the account "ed25519".
+"${SPARKLE_BIN}"
+```
+
+The tool prints a line like:
+
+```
+Public Key (SUPublicEDKey):  <base64-encoded public key>
+```
+
+**2. Add the public key to Info.plist**
+
+Set the `SPARKLE_PUBLIC_ED_KEY` environment variable (or repository secret) to the base64 public key printed above. The `build-dmg.sh` script reads this variable and writes it into `Info.plist` at build time:
+
+```bash
+export SPARKLE_PUBLIC_ED_KEY="<your base64 public key>"
+./build-dmg.sh
+```
+
+In GitHub Actions add it as a repository secret named `SPARKLE_PUBLIC_ED_KEY`.
+
+**3. Store the private key for CI**
+
+Export the private key from Keychain and store it as the `SPARKLE_ED_PRIVATE_KEY` secret:
+
+```bash
+# Find the Sparkle sign_update tool
+SPARKLE_BIN=$(find .build/artifacts -name "sign_update" 2>/dev/null | head -1)
+
+# Export the private key (reads from Keychain, prints base64 to stdout)
+"${SPARKLE_BIN}" --export-private-key
+```
+
+Add the printed value as a repository secret named `SPARKLE_ED_PRIVATE_KEY`.
+
+**4. Required CI secrets summary**
+
+| Secret | Purpose |
+|---|---|
+| `SPARKLE_PUBLIC_ED_KEY` | Embedded in `Info.plist`; verifies update signatures at runtime |
+| `SPARKLE_ED_PRIVATE_KEY` | Signs the DMG; used by the `update-appcast` workflow job |
+
+Once both secrets are set, every `v*` tag push will build the DMG, sign it, update `docs/appcast.xml`, and push the updated feed automatically.
+
+### Releasing a new version
+
+> **TL;DR:** push a version tag. Everything else is automatic.
+
+```bash
+git tag v1.2.0
+git push --tags
+```
+
+That single command triggers three sequential CI jobs in `release.yml`:
+
+| CI job | What it does |
+|---|---|
+| `build-and-notarize` | Builds the signed + notarized DMG |
+| `create-release` | Creates a GitHub Release and attaches the DMG |
+| `update-appcast` | Signs the DMG with the EdDSA key, appends a new entry to `docs/appcast.xml`, commits & pushes it to `main` |
+
+**Sparkle does not poll the GitHub Releases page.** It fetches the [appcast feed](https://abirismyname.github.io/markymarkdown/appcast.xml) — an RSS-style XML file hosted via GitHub Pages. The appcast entry contains the DMG download URL (which does point at the GitHub Release asset), the new version number, the byte size, and an EdDSA signature. When users' copies of MarkyMarkdown next check for updates (on launch or via "Check for Updates…"), they read this feed, compare the version, and Sparkle handles downloading, verifying, and installing the update automatically.
+
+If `SPARKLE_ED_PRIVATE_KEY` is not configured the `update-appcast` job skips with a warning and no update will be delivered to existing users even though the GitHub Release exists. Set the secret before tagging if you want in-app updates.
+
 ## Milestone Celebrations
 
 Every conversion counts! Unlock special achievements:
