@@ -218,26 +218,6 @@ nav {
   font-weight: 500;
 }
 
-/* ── Screenshot ────────────────────────────────────────────── */
-#screenshot {
-  text-align: center;
-  background: var(--bg);
-}
-
-.screenshot-wrap {
-  margin-inline: auto;
-  max-width: 640px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  margin-bottom: 20px;
-}
-
-.screenshot-caption {
-  font-size: 15px;
-  color: var(--muted);
-}
-
 /* ── How it works ──────────────────────────────────────────── */
 #how-it-works {
   background: var(--bg-alt);
