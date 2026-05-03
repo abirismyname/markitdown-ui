@@ -47,5 +47,20 @@
     sparkle:edSignature="NQK54aMkXoca6hHc0CqlwIh2jb9rbmlF8dAT7fRKHd6KQYkkOgxs1jVfunRfAXeFbjicnV+AtgzBoXCwMCHgCw==" />
 </item>
 
+<item>
+  <title>Version 1.2.1</title>
+  <pubDate>Sun, 03 May 2026 16:39:07 +0000</pubDate>
+  <sparkle:releaseNotesLink>
+    https://github.com/abirismyname/markymarkdown/releases/tag/v1.2.1
+  </sparkle:releaseNotesLink>
+  <enclosure
+    url="https://github.com/abirismyname/markymarkdown/releases/download/v1.2.1/MarkyMarkdown-1.2.1.dmg"
+    sparkle:version="1.2.1"
+    sparkle:shortVersionString="1.2.1"
+    length="89076076"
+    type="application/octet-stream"
+    sparkle:edSignature="3gAhlVbV8/Y3i8lEKoTs4hvCdfK2tLXPR5xZNGLqH/2p5SGTTYrONthFEHRzUZUN6y+xfZjLniF+I9W1OGaNAQ==" />
+</item>
+
   </channel>
 </rss>
