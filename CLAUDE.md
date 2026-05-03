@@ -62,6 +62,7 @@ Collisions → `original.pdf (1).md`, `original.pdf (2).md`, …
 |-----|------|---------|
 | `settings.cliPath` | String | Path to MarkItDown executable |
 | `settings.keepDataURIs` | Bool | Passes `--keep-data-uris` to CLI |
+| `settings.colorScheme` | String | UI color scheme (`auto`/`light`/`dark`) |
 | `com.markitdown.conversionCount` | Int | Milestone celebration counter |
 
 ---

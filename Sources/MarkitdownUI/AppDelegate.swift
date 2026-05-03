@@ -49,6 +49,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             .store(in: &cancellables)
 
+        // Apply saved color scheme immediately so the first windows open with the correct appearance.
+        NSApp.appearance = settings.colorScheme.nsAppearance
+
         dropWindowController.show()
     }
 
