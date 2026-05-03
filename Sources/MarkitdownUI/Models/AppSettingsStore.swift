@@ -100,20 +100,28 @@ final class AppSettingsStore: ObservableObject {
     /// replicates the same search paths but returns `nil` on failure instead.
     private static func safeModuleBundle() -> Bundle? {
         let bundleName = "MarkitdownUI_MarkitdownUI.bundle"
-        let candidates: [URL?] = [
-            Bundle.main.resourceURL,
-            Bundle.main.resourceURL?
-                .deletingLastPathComponent()
-                .deletingLastPathComponent()
-                .deletingLastPathComponent(),
-            URL(fileURLWithPath: ProcessInfo.processInfo.arguments[0])
-                .deletingLastPathComponent(),
-            URL(fileURLWithPath: ProcessInfo.processInfo.arguments[0])
-                .deletingLastPathComponent()
-                .deletingLastPathComponent(),
-        ]
-        for candidateOpt in candidates {
-            guard let candidate = candidateOpt else { continue }
+        // Replicate the candidate search paths from SwiftPM's generated Bundle.module code.
+        // All candidates are only passed to Bundle(url:), which returns nil for invalid paths,
+        // so no filesystem action is taken with these URLs beyond checking for a .bundle directory.
+        //
+        // Candidate 1: .app/Contents/Resources/  (typical packaged app resourceURL)
+        // Candidate 2: three levels up → .app/Contents/ → .app/ → parent of .app
+        //              (covers development builds where .bundle sits next to the .app)
+        // Candidates 3-4: executable directory and its parent (covers `swift run` .build/debug/)
+        let resourceURL = Bundle.main.resourceURL
+        // ascends: .app/Contents/Resources/ → .app/Contents/ → .app/ → containing directory
+        let appParentURL = resourceURL?
+            .deletingLastPathComponent()   // → .app/Contents/
+            .deletingLastPathComponent()   // → .app/
+            .deletingLastPathComponent()   // → parent of .app
+        let executableURL = ProcessInfo.processInfo.arguments.first.map { URL(fileURLWithPath: $0) }
+        let candidates = [
+            resourceURL,
+            appParentURL,
+            executableURL?.deletingLastPathComponent(),
+            executableURL?.deletingLastPathComponent().deletingLastPathComponent(),
+        ].compactMap { $0 }
+        for candidate in candidates {
             let bundleURL = candidate.appendingPathComponent(bundleName)
             if let bundle = Bundle(url: bundleURL) {
                 return bundle
