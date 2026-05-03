@@ -38,6 +38,7 @@ struct DropZoneView: View {
     @State private var celebrationMessage = ""
     @State private var confettiTrigger: Int = 0
     @State private var spinAngle: Double = 0
+    @State private var showErrorDetails = false
 
     private let spinAnimationDuration: Double = 2.0
 
@@ -114,6 +115,7 @@ struct DropZoneView: View {
                 .foregroundStyle(Color.white.opacity(0.7))
                 .font(.system(size: 13))
         case let .converting(fileName):
+            let _ = { showErrorDetails = false }()
             HStack(spacing: 8) {
                 ProgressView()
                     .progressViewStyle(.circular)
@@ -169,6 +171,25 @@ struct DropZoneView: View {
                     .font(.system(size: 11, weight: .medium))
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 460)
+                Button(showErrorDetails ? "Hide Details" : "Show Details") {
+                    showErrorDetails.toggle()
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.red.opacity(0.7))
+                .buttonStyle(.plain)
+                if showErrorDetails {
+                    ScrollView {
+                        Text(message)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.red.opacity(0.85))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: 460, alignment: .leading)
+                            .padding(8)
+                    }
+                    .frame(maxWidth: 460, maxHeight: 120)
+                    .background(Color.black.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
             }
         }
     }
