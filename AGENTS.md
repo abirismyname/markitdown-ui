@@ -102,6 +102,7 @@ gh pr create
 |-----|---------|
 | `settings.cliPath` | Path to MarkItDown executable |
 | `settings.keepDataURIs` | Toggle `--keep-data-uris` flag |
+| `settings.colorScheme` | UI color scheme (`auto`/`light`/`dark`) |
 | `com.markitdown.conversionCount` | Persistent milestone counter |
 
 ### Joy / UX Features
