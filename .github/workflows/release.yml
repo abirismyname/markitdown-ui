@@ -205,12 +205,19 @@ jobs:
         printf '%s' "${SPARKLE_ED_PRIVATE_KEY}" > "$SPARKLE_KEY_FILE"
 
         # Generate EdDSA signature
-        if ! ED_SIGNATURE=$(/tmp/sparkle-tools/bin/sign_update "${DMG_PATH}" --ed-key-file "$SPARKLE_KEY_FILE"); then
+        # sign_update outputs the full XML attributes: sparkle:edSignature="..." length="..."
+        # Extract only the raw base64 signature value for use in the appcast template.
+        if ! SIGN_OUTPUT=$(/tmp/sparkle-tools/bin/sign_update "${DMG_PATH}" --ed-key-file "$SPARKLE_KEY_FILE"); then
           rm -f "$SPARKLE_KEY_FILE"
           echo "❌ sign_update failed — verify that SPARKLE_ED_PRIVATE_KEY is a valid EdDSA private key."
           exit 1
         fi
         rm -f "$SPARKLE_KEY_FILE"
+        ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
+        if [[ -z "$ED_SIGNATURE" ]]; then
+          echo "❌ Could not extract edSignature from sign_update output: $SIGN_OUTPUT"
+          exit 1
+        fi
 
         NEW_ITEM=$(cat <<ITEM
         <item>
