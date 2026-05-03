@@ -9,6 +9,7 @@ let package = Package(
         .macOS(.v13)
     ],
     dependencies: [
+        .package(url: "https://github.com/simibac/ConfettiSwiftUI.git", .upToNextMinor(from: "1.1.0")),
         .package(
             url: "https://github.com/sparkle-project/Sparkle",
             from: "2.9.1"
@@ -17,7 +18,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "MarkitdownUI",
-            dependencies: ["Sparkle"],
+            dependencies: [
+                .product(name: "ConfettiSwiftUI", package: "ConfettiSwiftUI"),
+                "Sparkle",
+            ],
             exclude: [
                 "Resources/AppIcon.iconset"
             ],

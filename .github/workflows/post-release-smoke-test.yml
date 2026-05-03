@@ -1,0 +1,113 @@
+name: Post Release Smoke Test
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test-dmg:
+    name: Mount, Install, and Launch
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download release DMG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          mkdir -p release-assets
+          gh release download "$TAG_NAME" \
+            --dir release-assets \
+            --pattern 'MarkyMarkdown-*.dmg'
+
+          DMG_PATH=$(find release-assets -maxdepth 1 -type f -name 'MarkyMarkdown-*.dmg' | head -1)
+          if [[ -z "$DMG_PATH" || ! -f "$DMG_PATH" ]]; then
+            echo "❌ No DMG asset found for release $TAG_NAME"
+            ls -la release-assets || true
+            exit 1
+          fi
+
+          echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
+          echo "Using DMG: $DMG_PATH"
+
+      - name: Mount DMG and install app
+        run: |
+          set -euo pipefail
+
+          ATTACH_OUTPUT=$(hdiutil attach -nobrowse -readonly "$DMG_PATH")
+          MOUNT_POINT=$(printf "%s\n" "$ATTACH_OUTPUT" | tail -1 | sed -E 's@^/dev/[^[:space:]]+[[:space:]]+[^[:space:]]+[[:space:]]+@@')
+          APP_SOURCE="${MOUNT_POINT}/MarkyMarkdown.app"
+          APP_TARGET="/Applications/MarkyMarkdown.app"
+
+          if [[ ! -d "$APP_SOURCE" ]]; then
+            echo "❌ App bundle not found in mounted DMG: $APP_SOURCE"
+            exit 1
+          fi
+
+          rm -rf "$APP_TARGET"
+          ditto "$APP_SOURCE" "$APP_TARGET"
+
+          echo "MOUNT_POINT=${MOUNT_POINT}" >> "$GITHUB_ENV"
+          echo "APP_TARGET=$APP_TARGET" >> "$GITHUB_ENV"
+          echo "Installed app to: $APP_TARGET"
+
+      - name: Launch app executable
+        run: |
+          set -euo pipefail
+
+          EXECUTABLE="$APP_TARGET/Contents/MacOS/MarkyMarkdown"
+          if [[ ! -x "$EXECUTABLE" ]]; then
+            echo "❌ Executable missing or not executable: $EXECUTABLE"
+            exit 1
+          fi
+
+          "$EXECUTABLE" &
+          APP_PID=$!
+          echo "APP_PID=$APP_PID" >> "$GITHUB_ENV"
+
+          for _ in {1..10}; do
+            if ps -p "$APP_PID" > /dev/null; then
+              echo "✅ App launched successfully with PID $APP_PID"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "❌ App process exited immediately"
+          exit 1
+
+      - name: Verify bundled CLI
+        run: |
+          set -euo pipefail
+
+          CLI="$APP_TARGET/Contents/Resources/markitdown/markitdown"
+          if [[ ! -x "$CLI" ]]; then
+            echo "❌ Bundled CLI missing or not executable: $CLI"
+            exit 1
+          fi
+
+          echo "✅ Bundled CLI present: $CLI"
+          "$CLI" --help 2>&1 | head -5
+
+      - name: Cleanup mounted image and app
+        if: always()
+        run: |
+          set +e
+
+          if [[ -n "${APP_PID:-}" ]]; then
+            kill "$APP_PID" 2>/dev/null || true
+          fi
+
+          if [[ -n "${MOUNT_POINT:-}" ]]; then
+            hdiutil detach "${MOUNT_POINT}" 2>/dev/null || true
+          fi
+
+          rm -rf /Applications/MarkyMarkdown.app

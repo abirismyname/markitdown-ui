@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import ConfettiSwiftUI
 
 private let celebrationMessages = [
     "✨ Magic complete! ✨",
@@ -35,6 +36,11 @@ struct DropZoneView: View {
 
     @State private var isTargeted = false
     @State private var celebrationMessage = ""
+    @State private var confettiTrigger: Int = 0
+    @State private var spinAngle: Double = 0
+    @State private var showErrorDetails = false
+
+    private let spinAnimationDuration: Double = 2.0
 
     var body: some View {
         ZStack {
@@ -61,18 +67,20 @@ struct DropZoneView: View {
                     )
                     .frame(width: 420, height: 220)
                     .overlay {
-                        VStack(spacing: 10) {
-                            Image(systemName: "square.and.arrow.down.on.square")
-                                .font(.system(size: 34, weight: .regular))
-                                .foregroundStyle(.white)
+                        ZStack {
+                            VStack(spacing: 10) {
+                                Image(systemName: "square.and.arrow.down.on.square")
+                                    .font(.system(size: 34, weight: .regular))
+                                    .foregroundStyle(.white)
 
-                            Text("Drop a file to convert")
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18, weight: .medium))
+                                Text("Drop a file to convert")
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18, weight: .medium))
 
-                            Text("Markdown will be created in the same folder")
-                                .foregroundStyle(Color.white.opacity(0.8))
-                                .font(.system(size: 13))
+                                Text("Markdown will be created in the same folder")
+                                    .foregroundStyle(Color.white.opacity(0.8))
+                                    .font(.system(size: 13))
+                            }
                         }
                     }
                     .onDrop(of: [UTType.fileURL], isTargeted: $isTargeted) { providers in
@@ -87,6 +95,16 @@ struct DropZoneView: View {
         .frame(minWidth: 560, minHeight: 420)
         .animation(.easeInOut(duration: 0.2), value: isTargeted)
         .animation(.easeInOut(duration: 0.2), value: conversionManager.state)
+        .animation(.easeInOut(duration: 0.4), value: conversionManager.milestoneCelebration != nil)
+        // Confetti burst fired on every successful conversion
+        .confettiCannon(
+            counter: $confettiTrigger,
+            confettis: [.text("✨"), .text("🎉"), .shape(.circle), .shape(.triangle)],
+            colors: [.green, .cyan, .white, .yellow],
+            openingAngle: .degrees(60),
+            closingAngle: .degrees(120),
+            radius: 300
+        )
     }
 
     @ViewBuilder
@@ -97,10 +115,21 @@ struct DropZoneView: View {
                 .foregroundStyle(Color.white.opacity(0.7))
                 .font(.system(size: 13))
         case let .converting(fileName):
+            let _ = { showErrorDetails = false }()
             HStack(spacing: 8) {
                 ProgressView()
                     .progressViewStyle(.circular)
                 Text("Converting \(fileName)…")
+                Image(systemName: "sparkle")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.cyan.opacity(0.9))
+                    .rotationEffect(.degrees(spinAngle))
+                    .onAppear {
+                        spinAngle = 0
+                        withAnimation(.linear(duration: spinAnimationDuration).repeatForever(autoreverses: false)) {
+                            spinAngle = 360
+                        }
+                    }
             }
             .foregroundStyle(.white)
             .font(.system(size: 13, weight: .medium))
@@ -130,6 +159,7 @@ struct DropZoneView: View {
             }
             .onAppear {
                 celebrationMessage = celebrationMessages.randomElement() ?? "🎉 Done! 🎉"
+                confettiTrigger += 1
             }
         case let .failure(message):
             VStack(spacing: 6) {
@@ -141,6 +171,25 @@ struct DropZoneView: View {
                     .font(.system(size: 11, weight: .medium))
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 460)
+                Button(showErrorDetails ? "Hide Details" : "Show Details") {
+                    showErrorDetails.toggle()
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.red.opacity(0.7))
+                .buttonStyle(.plain)
+                if showErrorDetails {
+                    ScrollView {
+                        Text(message)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.red.opacity(0.85))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: 460, alignment: .leading)
+                            .padding(8)
+                    }
+                    .frame(maxWidth: 460, maxHeight: 120)
+                    .background(Color.black.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
             }
         }
     }
