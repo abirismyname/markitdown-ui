@@ -43,6 +43,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             .store(in: &cancellables)
 
+        settings.$colorScheme
+            .sink { scheme in
+                NSApp.appearance = scheme.nsAppearance
+            }
+            .store(in: &cancellables)
+
         dropWindowController.show()
     }
 

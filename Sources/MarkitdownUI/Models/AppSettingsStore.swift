@@ -1,4 +1,27 @@
+import AppKit
 import Foundation
+
+enum ColorSchemePreference: String, CaseIterable {
+    case auto
+    case light
+    case dark
+
+    var displayName: String {
+        switch self {
+        case .auto: return "Auto"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+
+    var nsAppearance: NSAppearance? {
+        switch self {
+        case .auto: return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark: return NSAppearance(named: .darkAqua)
+        }
+    }
+}
 
 @MainActor
 final class AppSettingsStore: ObservableObject {
@@ -10,6 +33,10 @@ final class AppSettingsStore: ObservableObject {
         didSet { UserDefaults.standard.set(keepDataURIs, forKey: Keys.keepDataURIs) }
     }
 
+    @Published var colorScheme: ColorSchemePreference {
+        didSet { UserDefaults.standard.set(colorScheme.rawValue, forKey: Keys.colorScheme) }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         let bundledPath = Self.bundledMarkitdownPath()
@@ -18,6 +45,8 @@ final class AppSettingsStore: ObservableObject {
         // Use bundled path if available, otherwise use saved path, otherwise use default
         self.cliPath = bundledPath ?? savedPath ?? "/Users/abirmajumdar/.local/bin/markitdown"
         self.keepDataURIs = defaults.object(forKey: Keys.keepDataURIs) as? Bool ?? false
+        let savedScheme = defaults.string(forKey: Keys.colorScheme)
+        self.colorScheme = savedScheme.flatMap(ColorSchemePreference.init(rawValue:)) ?? .auto
     }
 
     func validationError() -> String? {
@@ -62,5 +91,6 @@ final class AppSettingsStore: ObservableObject {
 private enum Keys {
     static let cliPath = "settings.cliPath"
     static let keepDataURIs = "settings.keepDataURIs"
+    static let colorScheme = "settings.colorScheme"
 }
 

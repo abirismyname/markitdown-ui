@@ -32,6 +32,19 @@ struct PreferencesView: View {
 
             Toggle("Keep data URIs in output", isOn: $settings.keepDataURIs)
 
+            HStack {
+                Text("Color Scheme")
+                    .font(.headline)
+                Spacer()
+                Picker("", selection: $settings.colorScheme) {
+                    ForEach(ColorSchemePreference.allCases, id: \.self) { scheme in
+                        Text(scheme.displayName).tag(scheme)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+            }
+
             if let error = settings.validationError() {
                 Text(error)
                     .foregroundStyle(.red)
@@ -45,6 +58,6 @@ struct PreferencesView: View {
             Spacer()
         }
         .padding(20)
-        .frame(width: 520, height: 260)
+        .frame(width: 520, height: 300)
     }
 }
