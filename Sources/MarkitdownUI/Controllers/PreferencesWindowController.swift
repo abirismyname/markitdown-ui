@@ -23,7 +23,7 @@ final class PreferencesWindowController {
 
     func show() {
         let contentView = PreferencesView(settings: settings) {
-            window.close()
+            self.window.close()
         }
         let hostingController = NSHostingController(rootView: contentView)
         window.contentViewController = hostingController
