@@ -139,6 +139,7 @@ jobs:
     runs-on: macos-15
     permissions:
       contents: write
+      pull-requests: write
     steps:
     - name: Checkout main branch
       uses: actions/checkout@v5
@@ -242,14 +243,24 @@ jobs:
         PYEOF
 
     - name: Commit updated appcast
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         if git diff --quiet docs/appcast.xml; then
           echo "ℹ️  No appcast changes to commit (SPARKLE_ED_PRIVATE_KEY may not be set)."
         else
+          VERSION="${{ steps.version.outputs.version }}"
+          BRANCH="chore/appcast-v${VERSION}"
+          git checkout -b "$BRANCH"
           git add docs/appcast.xml
-          git commit -m "chore: update appcast for v${{ steps.version.outputs.version }}"
-          git push origin main
-          echo "✅ appcast.xml committed and pushed"
+          git commit -m "chore: update appcast for v${VERSION}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: update appcast for v${VERSION}" \
+            --body "Automated appcast update for release v${VERSION}."
+          echo "✅ appcast.xml PR created for branch $BRANCH"
         fi
