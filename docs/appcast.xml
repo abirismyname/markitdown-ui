@@ -62,5 +62,20 @@
     sparkle:edSignature="3gAhlVbV8/Y3i8lEKoTs4hvCdfK2tLXPR5xZNGLqH/2p5SGTTYrONthFEHRzUZUN6y+xfZjLniF+I9W1OGaNAQ==" />
 </item>
 
+<item>
+  <title>Version 1.3.0</title>
+  <pubDate>Sun, 03 May 2026 18:35:47 +0000</pubDate>
+  <sparkle:releaseNotesLink>
+    https://github.com/abirismyname/markymarkdown/releases/tag/v1.3.0
+  </sparkle:releaseNotesLink>
+  <enclosure
+    url="https://github.com/abirismyname/markymarkdown/releases/download/v1.3.0/MarkyMarkdown-1.3.0.dmg"
+    sparkle:version="1.3.0"
+    sparkle:shortVersionString="1.3.0"
+    length="89095120"
+    type="application/octet-stream"
+    sparkle:edSignature="44buWtSiboJrXwfZ5nqQTT2qo7NMBkC39iDUhD8VOKtN8CJ0bMjkdYK+P26uUF7jt12+CrcdkaiFx9s1r7ZUCQ==" />
+</item>
+
   </channel>
 </rss>
