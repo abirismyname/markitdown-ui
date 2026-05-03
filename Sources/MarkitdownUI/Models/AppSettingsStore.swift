@@ -38,10 +38,20 @@ final class AppSettingsStore: ObservableObject {
     }
 
     static func bundledMarkitdownPath() -> String? {
-        // Try to find the bundled markitdown binary in the app bundle
+        // SwiftPM resources (debug/release via `swift build`) live in Bundle.module.
+        if let bundledURL = Bundle.module.url(forResource: "markitdown", withExtension: nil) {
+            let bundledPath = bundledURL.path
+            if FileManager.default.fileExists(atPath: bundledPath),
+                FileManager.default.isExecutableFile(atPath: bundledPath) {
+                return bundledPath
+            }
+        }
+
+        // Packaged app fallback where resources are copied under Contents/Resources/.
         if let bundlePath = Bundle.main.resourcePath {
             let markitdownPath = (bundlePath as NSString).appendingPathComponent("markitdown/markitdown")
-            if FileManager.default.fileExists(atPath: markitdownPath) {
+            if FileManager.default.fileExists(atPath: markitdownPath),
+                FileManager.default.isExecutableFile(atPath: markitdownPath) {
                 return markitdownPath
             }
         }
