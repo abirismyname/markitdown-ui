@@ -436,7 +436,92 @@ footer {
   font-weight: 500;
 }
 
-/* ── Responsive ────────────────────────────────────────────── */
+/* ── App Screenshot ────────────────────────────────────────── */
+#screenshot {
+  background: var(--bg-alt);
+  text-align: center;
+}
+
+.screenshot-wrap {
+  margin-inline: auto;
+  max-width: 600px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 20px;
+}
+
+.screenshot-wrap img { width: 100%; }
+
+.screenshot-caption {
+  max-width: 600px;
+  margin-inline: auto;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* ── What is Markdown? ─────────────────────────────────────── */
+#what-is-markdown { background: var(--bg); }
+
+.markdown-explainer {
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.markdown-text {
+  flex: 1 1 340px;
+}
+
+.markdown-text p {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 16px;
+}
+
+.markdown-text p:last-child { margin-bottom: 0; }
+
+.markdown-links {
+  flex: 0 0 280px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  box-shadow: var(--shadow);
+}
+
+.markdown-links h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.markdown-links ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.markdown-links ul li a {
+  font-size: 14px;
+  color: var(--accent);
+  line-height: 1.5;
+}
+
+.markdown-links ul li a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .markdown-links { flex: 1 1 100%; }
+}
+
+
 @media (max-width: 640px) {
   nav { position: static; }
   .nav-links { gap: 16px; }
