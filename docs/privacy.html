@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f0f4ff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0a0e15" media="(prefers-color-scheme: dark)" />
   <title>Privacy Policy — MarkyMarkdown</title>
   <meta name="description" content="MarkyMarkdown collects no data. Files are processed entirely on your Mac and are never transmitted anywhere." />
 
@@ -16,6 +18,18 @@
   <meta property="og:type"        content="website" />
 
   <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Pre-paint theme application (avoids flash of incorrect theme) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('mm-theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      } catch (_) {}
+    })();
+  </script>
 </head>
 <body>
 
@@ -31,6 +45,13 @@
       <li><a href="index.html#formats">Formats</a></li>
       <li><a href="privacy.html">Privacy</a></li>
       <li><a class="btn-nav" href="https://github.com/abirismyname/markymarkdown/releases/latest">Download</a></li>
+      <li>
+        <div class="theme-switch" role="radiogroup" aria-label="Color theme">
+          <button type="button" data-theme-value="light" role="radio" aria-checked="false" aria-label="Light theme" title="Light">☀️</button>
+          <button type="button" data-theme-value="auto"  role="radio" aria-checked="true"  aria-label="Use system theme" title="System">🌓</button>
+          <button type="button" data-theme-value="dark"  role="radio" aria-checked="false" aria-label="Dark theme" title="Dark">🌙</button>
+        </div>
+      </li>
     </ul>
   </div>
 </nav>
@@ -114,6 +135,8 @@
     <p>© 2024–2025 MarkyMarkdown. Built with ❤️ on macOS.</p>
   </div>
 </footer>
+
+<script src="js/theme.js"></script>
 
 </body>
 </html>
