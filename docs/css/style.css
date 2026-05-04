@@ -517,17 +517,97 @@ footer {
 
 .markdown-links ul li a:hover { text-decoration: underline; }
 
-@media (max-width: 640px) {
+/* ── Responsive breakpoints ────────────────────────────────── */
+
+/* Tablet & small laptop */
+@media (max-width: 900px) {
+  .markdown-explainer { gap: 32px; }
   .markdown-links { flex: 1 1 100%; }
+  .hero-image-wrap { max-width: 100%; }
 }
 
+/* Tablet portrait & large phones */
+@media (max-width: 768px) {
+  section { padding-block: 64px; }
+  #hero { padding-block: 48px 64px; }
+  #privacy-banner { padding-block: 48px; }
+  .section-title { margin-bottom: 36px; }
 
+  .nav-inner {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  .nav-links { gap: 18px; }
+  .nav-links a { font-size: 14px; }
+
+  .privacy-pillars { gap: 20px; }
+  .pillar { min-width: 130px; }
+
+  .features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+/* Phones */
 @media (max-width: 640px) {
+  body { font-size: 16px; }
+
+  .container { padding-inline: 18px; }
+
   nav { position: static; }
-  .nav-links { gap: 16px; }
-  .nav-links .btn-nav { display: none; }
-  section { padding-block: 56px; }
-  .steps { flex-direction: column; align-items: center; }
-  .step { max-width: 100%; }
-  .hero-image-wrap { border-radius: 12px; }
+  .nav-inner { padding-block: 12px; }
+  .nav-logo { font-size: 16px; }
+  .nav-logo img { width: 28px; height: 28px; }
+  .nav-links {
+    gap: 4px 14px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .nav-links a {
+    /* Ensure ≥44px tap target height per iOS HIG */
+    padding: 10px 0;
+    font-size: 14px;
+  }
+  .nav-links .btn-nav {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  section { padding-block: 48px; }
+  #hero { padding-block: 32px 48px; }
+  .hero-tagline { margin-bottom: 24px; }
+  .hero-image-wrap { border-radius: 12px; margin-bottom: 28px; }
+
+  .btn { padding: 14px 24px; font-size: 16px; }
+  .hero-cta .btn-primary { width: 100%; max-width: 320px; justify-content: center; }
+  #download .btn-primary { width: 100%; max-width: 320px; justify-content: center; }
+
+  .steps { flex-direction: column; align-items: stretch; gap: 16px; }
+  .step { max-width: 100%; padding: 24px 20px; }
+
+  .features-grid { grid-template-columns: 1fr; gap: 16px; }
+  .feature-card { padding: 24px 20px; }
+
+  .format-badges { gap: 8px; }
+  .format-badge { padding: 8px 14px; font-size: 14px; }
+
+  .markdown-explainer { gap: 24px; }
+  .markdown-links { padding: 22px 20px; }
+
+  .privacy-content { padding-block: 36px 56px; }
+  .privacy-section { margin-bottom: 36px; }
+  .privacy-section h2 { font-size: 18px; }
+  .privacy-section p, .privacy-section ul { font-size: 15px; }
+
+  .footer-links { gap: 12px 20px; }
+  .footer-links a { padding: 6px 0; }
+}
+
+/* Small phones (iPhone SE etc.) */
+@media (max-width: 380px) {
+  .container { padding-inline: 14px; }
+  .nav-links a { font-size: 13px; }
+  .nav-links .btn-nav { padding: 9px 14px; font-size: 13px; }
+  .privacy-pillars { flex-direction: column; gap: 16px; }
+  .pillar { min-width: 0; }
 }
