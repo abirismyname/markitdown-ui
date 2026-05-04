@@ -15,10 +15,48 @@
   --accent-h:  #1a56d6;
   --muted:     #4a5778;
   --border:    rgba(44, 111, 239, 0.15);
+  --card-bg:   #ffffff;
+  --nav-bg:    rgba(240, 244, 255, 0.88);
+  --callout-bg: rgba(44, 111, 239, 0.08);
   --radius:    12px;
   --font:      -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
   --shadow:    0 4px 24px rgba(26, 39, 68, 0.10);
   --shadow-lg: 0 12px 48px rgba(26, 39, 68, 0.16);
+}
+
+/* Dark theme — applied automatically with System default,
+   or explicitly when the user picks Dark via the switcher. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #0d1320;
+    --bg-alt:    #141b2d;
+    --dark:      #05080f;
+    --navy:      #e8efff;
+    --accent:    #5b8def;
+    --accent-h:  #7aa3f5;
+    --muted:     #9aa7c7;
+    --border:    rgba(91, 141, 239, 0.22);
+    --card-bg:   #1a2236;
+    --nav-bg:    rgba(13, 19, 32, 0.85);
+    --callout-bg: rgba(91, 141, 239, 0.12);
+    --shadow:    0 4px 24px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.5);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:        #0d1320;
+  --bg-alt:    #141b2d;
+  --dark:      #05080f;
+  --navy:      #e8efff;
+  --accent:    #5b8def;
+  --accent-h:  #7aa3f5;
+  --muted:     #9aa7c7;
+  --border:    rgba(91, 141, 239, 0.22);
+  --card-bg:   #1a2236;
+  --nav-bg:    rgba(13, 19, 32, 0.85);
+  --callout-bg: rgba(91, 141, 239, 0.12);
+  --shadow:    0 4px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.5);
 }
 
 html { scroll-behavior: smooth; }
@@ -51,7 +89,7 @@ nav {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(240, 244, 255, 0.88);
+  background: var(--nav-bg);
   backdrop-filter: saturate(160%) blur(16px);
   -webkit-backdrop-filter: saturate(160%) blur(16px);
   border-bottom: 1px solid var(--border);
@@ -106,6 +144,49 @@ nav {
 }
 
 .nav-links .btn-nav:hover { background: var(--accent-h); text-decoration: none; }
+
+/* ── Theme switcher (Light / System / Dark) ───────────────── */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--callout-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.theme-switch button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+
+.theme-switch button:hover { color: var(--accent); }
+
+.theme-switch button[aria-checked="true"] {
+  background: var(--card-bg);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.theme-switch button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 /* ── Buttons ───────────────────────────────────────────────── */
 .btn {
@@ -241,7 +322,7 @@ nav {
 .step {
   flex: 1 1 220px;
   max-width: 300px;
-  background: #fff;
+  background: var(--card-bg);
   border-radius: var(--radius);
   padding: 32px 24px;
   box-shadow: var(--shadow);
@@ -282,7 +363,7 @@ nav {
 }
 
 .feature-card {
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 28px 24px;
@@ -309,7 +390,7 @@ nav {
 }
 
 .format-badge {
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 20px;
@@ -426,7 +507,7 @@ footer {
 .privacy-section ul li { margin-bottom: 6px; }
 
 .callout {
-  background: rgba(44, 111, 239, 0.08);
+  background: var(--callout-bg);
   border-left: 4px solid var(--accent);
   border-radius: 0 8px 8px 0;
   padding: 16px 20px;
@@ -485,7 +566,7 @@ footer {
 
 .markdown-links {
   flex: 0 0 280px;
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 28px 24px;
