@@ -265,12 +265,17 @@ struct DropZoneDelegate: DropDelegate {
     @Binding var isUnsupportedHover: Bool
     let onDrop: (URL) -> Void
 
+    // Token used to discard async callbacks that arrive after the drag session ends.
+    @State private var dragToken = UUID()
+
     func validateDrop(info: DropInfo) -> Bool {
         // Allow any fileURL to enter so we can show the "unsupported" visual
         return info.hasItemsConforming(to: [UTType.fileURL])
     }
 
     func dropEntered(info: DropInfo) {
+        let token = UUID()
+        dragToken = token
         guard let provider = info.itemProviders(for: [UTType.fileURL]).first else { return }
         provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
             let ext: String
@@ -280,6 +285,8 @@ struct DropZoneDelegate: DropDelegate {
                 ext = ""
             }
             DispatchQueue.main.async {
+                // Only update state if this drag session is still active
+                guard dragToken == token else { return }
                 let supported = MarkitdownConversionService.supportedExtensions.contains(ext)
                 isTargeted = supported
                 isUnsupportedHover = !supported
@@ -288,11 +295,13 @@ struct DropZoneDelegate: DropDelegate {
     }
 
     func dropExited(info: DropInfo) {
+        dragToken = UUID() // invalidate any pending callback
         isTargeted = false
         isUnsupportedHover = false
     }
 
     func performDrop(info: DropInfo) -> Bool {
+        dragToken = UUID() // invalidate any pending callback
         isTargeted = false
         isUnsupportedHover = false
         guard let provider = info.itemProviders(for: [UTType.fileURL]).first else { return false }

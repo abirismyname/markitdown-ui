@@ -41,6 +41,13 @@ struct SupportedExtensionsTests {
         #expect(!supported.contains("avi"))
     }
 
+    @Test("audio formats are not supported by the bundled CLI")
+    func audioFormatsUnsupported() {
+        let supported = MarkitdownConversionService.supportedExtensions
+        #expect(!supported.contains("mp3"))
+        #expect(!supported.contains("wav"))
+    }
+
     @Test("executable files are not supported")
     func executableFilesUnsupported() {
         let supported = MarkitdownConversionService.supportedExtensions

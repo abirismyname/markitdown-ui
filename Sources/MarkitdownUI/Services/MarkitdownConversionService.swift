@@ -28,7 +28,7 @@ struct MarkitdownConversionService {
     let cliPath: String
     let keepDataURIs: Bool
 
-    /// File extensions that MarkItDown is known to support.
+    /// File extensions that MarkItDown is known to support with the bundled CLI.
     static let supportedExtensions: Set<String> = [
         // Documents
         "pdf", "docx", "doc", "pptx", "ppt", "xlsx", "xls",
@@ -38,16 +38,8 @@ struct MarkitdownConversionService {
         "txt", "md", "markdown", "rst", "rtf",
         // Data
         "csv", "json", "xml",
-        // Images
+        // Images (EXIF metadata; OCR requires optional Azure extras)
         "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif",
-        // Audio
-        "mp3", "wav", "ogg", "m4a", "flac",
-        // Archives
-        "zip",
-        // E-books
-        "epub",
-        // Notebooks
-        "ipynb",
     ]
 
     func convertFile(at inputURL: URL) throws -> ConversionResult {
