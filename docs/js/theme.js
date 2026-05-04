@@ -27,28 +27,49 @@
   }
 
   // Keep iOS Safari / Android Chrome browser chrome in sync with manual overrides.
+  // Color values are read from the existing <meta name="theme-color"> tags so
+  // they remain defined in a single place (the HTML head).
   function updateMetaThemeColor(theme) {
-    var lightColor = '#f0f4ff';
-    var darkColor = '#0a0e15';
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     if (!metas.length) return;
 
+    // Snapshot original media + content on first invocation so we can restore
+    // the media-aware pair when the user switches back to Auto.
+    metas.forEach(function (m) {
+      if (!m.hasAttribute('data-original-content')) {
+        m.setAttribute('data-original-content', m.getAttribute('content') || '');
+      }
+      if (!m.hasAttribute('data-original-media') && m.hasAttribute('media')) {
+        m.setAttribute('data-original-media', m.getAttribute('media'));
+      }
+    });
+
     if (theme === 'auto') {
-      // Restore the original media-aware pair.
       metas.forEach(function (m) {
         var media = m.getAttribute('data-original-media');
+        var content = m.getAttribute('data-original-content');
         if (media) m.setAttribute('media', media);
+        if (content) m.setAttribute('content', content);
       });
-    } else {
-      var color = theme === 'dark' ? darkColor : lightColor;
-      metas.forEach(function (m) {
-        if (!m.hasAttribute('data-original-media') && m.hasAttribute('media')) {
-          m.setAttribute('data-original-media', m.getAttribute('media'));
-        }
-        m.removeAttribute('media');
-        m.setAttribute('content', color);
-      });
+      return;
     }
+
+    // Pick the color from whichever original meta matches the chosen theme.
+    var wantMedia = theme === 'dark'
+      ? '(prefers-color-scheme: dark)'
+      : '(prefers-color-scheme: light)';
+    var picked = null;
+    metas.forEach(function (m) {
+      if (m.getAttribute('data-original-media') === wantMedia) {
+        picked = m.getAttribute('data-original-content');
+      }
+    });
+    if (!picked) return;
+
+    metas.forEach(function (m) {
+      m.removeAttribute('media');
+      m.setAttribute('content', picked);
+    });
   }
 
   function syncSwitch(theme) {
