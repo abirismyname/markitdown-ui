@@ -21,12 +21,14 @@ private let celebrationMessages = [
 
 func playfulErrorMessage(_ original: String) -> String {
     let lower = original.lowercased()
-    if lower.contains("path") {
+    if lower.contains("unsupported file type") {
+        return "That file type isn't supported yet. Try PDF, DOCX, PPTX, XLSX, HTML, or plain text! 📄"
+    } else if lower.contains("path") {
         return "CLI path got lost—check Preferences! 🔍"
     } else if lower.contains("executable") {
         return "CLI needs permission to run. Check Preferences! 🔐"
     } else if lower.contains("not a valid") {
-        return "Hmm, that file format might not be supported. Try another! 📁"
+        return "Hmm, that doesn't look like a local file. Try again! 📁"
     }
     return "Something went sideways. Try again? 😊"
 }
@@ -37,6 +39,7 @@ struct DropZoneView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var isTargeted = false
+    @State private var isUnsupportedHover = false
     @State private var celebrationMessage = ""
     @State private var confettiTrigger: Int = 0
     @State private var spinAngle: Double = 0
@@ -72,34 +75,52 @@ struct DropZoneView: View {
 
                 RoundedRectangle(cornerRadius: 20)
                     .strokeBorder(
-                        style: StrokeStyle(lineWidth: isTargeted ? 3 : 1.5, dash: [8])
+                        style: StrokeStyle(lineWidth: (isTargeted || isUnsupportedHover) ? 3 : 1.5, dash: [8])
                     )
-                    .foregroundStyle(isTargeted ? Color.cyan : Color.primary.opacity(0.5))
+                    .foregroundStyle(dropZoneBorderColor)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.primary.opacity(isTargeted ? 0.14 : 0.08))
+                            .fill(dropZoneFillColor)
                     )
                     .frame(width: 420, height: 220)
                     .overlay {
                         ZStack {
-                            VStack(spacing: 10) {
-                                Image(systemName: "square.and.arrow.down.on.square")
-                                    .font(.system(size: 34, weight: .regular))
-                                    .foregroundStyle(.primary)
+                            if isUnsupportedHover {
+                                VStack(spacing: 10) {
+                                    Image(systemName: "xmark.circle")
+                                        .font(.system(size: 34, weight: .regular))
+                                        .foregroundStyle(.red)
 
-                                Text("Drop a file to convert")
-                                    .foregroundStyle(.primary)
-                                    .font(.system(size: 18, weight: .medium))
+                                    Text("Unsupported file type")
+                                        .foregroundStyle(.red)
+                                        .font(.system(size: 18, weight: .medium))
 
-                                Text("Markdown will be created in the same folder")
-                                    .foregroundStyle(.secondary)
-                                    .font(.system(size: 13))
+                                    Text("Try PDF, DOCX, PPTX, XLSX, HTML, or plain text")
+                                        .foregroundStyle(.red.opacity(0.8))
+                                        .font(.system(size: 13))
+                                }
+                            } else {
+                                VStack(spacing: 10) {
+                                    Image(systemName: "square.and.arrow.down.on.square")
+                                        .font(.system(size: 34, weight: .regular))
+                                        .foregroundStyle(.primary)
+
+                                    Text("Drop a file to convert")
+                                        .foregroundStyle(.primary)
+                                        .font(.system(size: 18, weight: .medium))
+
+                                    Text("Markdown will be created in the same folder")
+                                        .foregroundStyle(.secondary)
+                                        .font(.system(size: 13))
+                                }
                             }
                         }
                     }
-                    .onDrop(of: [UTType.fileURL], isTargeted: $isTargeted) { providers in
-                        loadFirstURL(from: providers)
-                    }
+                    .onDrop(of: [UTType.fileURL], delegate: DropZoneDelegate(
+                        isTargeted: $isTargeted,
+                        isUnsupportedHover: $isUnsupportedHover,
+                        onDrop: { url in conversionManager.convert(url: url) }
+                    ))
 
                 statusView
             }
@@ -108,6 +129,7 @@ struct DropZoneView: View {
         }
         .frame(minWidth: 560, minHeight: 420)
         .animation(.easeInOut(duration: 0.2), value: isTargeted)
+        .animation(.easeInOut(duration: 0.2), value: isUnsupportedHover)
         .animation(.easeInOut(duration: 0.2), value: conversionManager.state)
         .animation(.easeInOut(duration: 0.4), value: conversionManager.milestoneCelebration != nil)
         // Confetti burst fired on every successful conversion
@@ -224,6 +246,63 @@ struct DropZoneView: View {
             }
         }
 
+        return true
+    }
+
+    private var dropZoneBorderColor: Color {
+        if isUnsupportedHover { return .red }
+        return isTargeted ? Color.cyan : Color.primary.opacity(0.5)
+    }
+
+    private var dropZoneFillColor: Color {
+        if isUnsupportedHover { return Color.red.opacity(0.08) }
+        return Color.primary.opacity(isTargeted ? 0.14 : 0.08)
+    }
+}
+
+struct DropZoneDelegate: DropDelegate {
+    @Binding var isTargeted: Bool
+    @Binding var isUnsupportedHover: Bool
+    let onDrop: (URL) -> Void
+
+    func validateDrop(info: DropInfo) -> Bool {
+        // Allow any fileURL to enter so we can show the "unsupported" visual
+        return info.hasItemsConforming(to: [UTType.fileURL])
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let provider = info.itemProviders(for: [UTType.fileURL]).first else { return }
+        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+            let ext: String
+            if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                ext = url.pathExtension.lowercased()
+            } else {
+                ext = ""
+            }
+            DispatchQueue.main.async {
+                let supported = MarkitdownConversionService.supportedExtensions.contains(ext)
+                isTargeted = supported
+                isUnsupportedHover = !supported
+            }
+        }
+    }
+
+    func dropExited(info: DropInfo) {
+        isTargeted = false
+        isUnsupportedHover = false
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        isTargeted = false
+        isUnsupportedHover = false
+        guard let provider = info.itemProviders(for: [UTType.fileURL]).first else { return false }
+        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+            guard let data = item as? Data,
+                  let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
+            DispatchQueue.main.async {
+                onDrop(url)
+            }
+        }
         return true
     }
 }

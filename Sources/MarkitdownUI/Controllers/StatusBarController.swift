@@ -139,7 +139,9 @@ final class StatusBarDropView: NSView {
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         let pasteboard = sender.draggingPasteboard
         let classes: [AnyClass] = [NSURL.self]
-        if let urls = pasteboard.readObjects(forClasses: classes, options: nil) as? [URL], !urls.isEmpty {
+        if let urls = pasteboard.readObjects(forClasses: classes, options: nil) as? [URL],
+           let url = urls.first,
+           MarkitdownConversionService.supportedExtensions.contains(url.pathExtension.lowercased()) {
             return .copy
         }
         return []
