@@ -30,15 +30,9 @@ A native macOS menu bar application that provides a joyful, delightful interface
 1. Download the latest `MarkyMarkdown-*.dmg` file from [Releases](https://github.com/abirismyname/markymarkdown/releases)
 2. Open the DMG file
 3. Drag the `MarkyMarkdown` app to the `Applications` folder
-4. In **Terminal**, run:
-   ```bash
-   xattr -rd com.apple.quarantine /Applications/MarkyMarkdown.app
-   ```
-5. Launch the app from Applications or Spotlight (⌘+Space, type "MarkyMarkdown")
+4. Launch the app from Applications or Spotlight (⌘+Space, type "MarkyMarkdown")
 
 The app will appear as a menu bar item and remain running in the background. No configuration needed!
-
-> **Note**: The quarantine removal step above is only needed for builds signed with an *Apple Development* certificate.
 
 ### From Source
 
@@ -310,7 +304,7 @@ Notarization removes the Gatekeeper warning that appears when users open the app
 
 When all three secrets are present, the workflow uses `xcrun notarytool` to submit the DMG and `xcrun stapler` to attach the notarization ticket before uploading the release asset.
 
-> **Note:** If only an *Apple Development* certificate is available (not *Developer ID Application*), users who download the DMG still need to remove the quarantine attribute manually—see the Installation step above.
+> **Note:** Notarization requires a **Developer ID Application** certificate (paid Apple Developer Program membership). Without it, macOS Gatekeeper may warn users when opening the app for the first time.
 
 ## Architecture
 
