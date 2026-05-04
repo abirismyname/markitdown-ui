@@ -24,6 +24,44 @@
       document.documentElement.setAttribute('data-theme', theme);
     }
     updateMetaThemeColor(theme);
+    updateThemedImages(theme);
+  }
+
+  // Resolve the effective color scheme (light/dark) for a given preference,
+  // consulting the system when the user has chosen "auto".
+  function resolveScheme(theme) {
+    if (theme === 'light' || theme === 'dark') return theme;
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    } catch (_) {
+      return 'light';
+    }
+  }
+
+  // Swap any <img> with data-light-src / data-dark-src to match the active
+  // theme. This complements the <picture> media-query fallback so manual
+  // theme-switcher changes are reflected immediately.
+  //
+  // Note: a matching <source> inside <picture> takes precedence over the
+  // <img>'s src, so once JS is in control we strip those <source> children
+  // (the inline media-query fallback only matters for no-JS visitors).
+  function updateThemedImages(theme) {
+    var scheme = resolveScheme(theme);
+    var attr = scheme === 'dark' ? 'data-dark-src' : 'data-light-src';
+    var imgs = document.querySelectorAll('img[data-light-src][data-dark-src]');
+    imgs.forEach(function (img) {
+      var picture = img.parentNode;
+      if (picture && picture.tagName === 'PICTURE') {
+        var sources = picture.querySelectorAll('source');
+        sources.forEach(function (s) { picture.removeChild(s); });
+      }
+      var next = img.getAttribute(attr);
+      if (next && img.getAttribute('src') !== next) {
+        img.setAttribute('src', next);
+      }
+    });
   }
 
   // Keep iOS Safari / Android Chrome browser chrome in sync with manual overrides.
@@ -93,6 +131,7 @@
     var current = getSaved();
     syncSwitch(current);
     updateMetaThemeColor(current);
+    updateThemedImages(current);
 
     var buttons = document.querySelectorAll('.theme-switch button[data-theme-value]');
     buttons.forEach(function (btn) {
@@ -100,5 +139,19 @@
         setTheme(btn.getAttribute('data-theme-value'));
       });
     });
+
+    // When the user is on "auto", follow live system color-scheme changes so
+    // themed images flip without a page reload.
+    try {
+      var mql = window.matchMedia('(prefers-color-scheme: dark)');
+      var onChange = function () {
+        if (getSaved() === 'auto') updateThemedImages('auto');
+      };
+      if (mql.addEventListener) {
+        mql.addEventListener('change', onChange);
+      } else if (mql.addListener) {
+        mql.addListener(onChange);
+      }
+    } catch (_) {}
   });
 })();
