@@ -53,6 +53,21 @@ struct ConversionErrorTests {
         #expect(desc.contains("bad format"))
     }
 
+    @Test("unsupportedFileType carries extension in description")
+    func unsupportedFileTypeDescription() {
+        let error = ConversionError.unsupportedFileType("mp4")
+        let desc = error.errorDescription ?? ""
+        #expect(desc.contains("mp4"))
+        #expect(desc.lowercased().contains("unsupported"))
+    }
+
+    @Test("unsupportedFileType unknown extension uses 'unknown' label")
+    func unsupportedFileTypeUnknown() {
+        let error = ConversionError.unsupportedFileType("unknown")
+        let desc = error.errorDescription ?? ""
+        #expect(desc.contains("unknown"))
+    }
+
     @Test("ConversionError conforms to LocalizedError")
     func localizedErrorConformance() {
         let error: LocalizedError = ConversionError.invalidInput

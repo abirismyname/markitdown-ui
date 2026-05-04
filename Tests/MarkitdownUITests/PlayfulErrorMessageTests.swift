@@ -53,6 +53,12 @@ struct PlayfulErrorMessageTests {
         #expect(lower.contains("permission") || lower.contains("executable"))
     }
 
+    @Test("'unsupported file type' keyword returns friendly format suggestion")
+    func unsupportedFileTypeKeyword() {
+        let result = playfulErrorMessage("Unsupported file type: .mp4")
+        #expect(result.lowercased().contains("supported") || result.lowercased().contains("pdf") || result.lowercased().contains("try"))
+    }
+
     @Test("each distinct keyword returns a distinct message")
     func distinctMessagesForDistinctKeywords() {
         let pathMsg = playfulErrorMessage("bad path here")
