@@ -83,6 +83,19 @@
   <sparkle:releaseNotesLink>
     https://github.com/abirismyname/markymarkdown/releases/tag/v1.3.1
   </sparkle:releaseNotesLink>
+  <description><![CDATA[
+    <h2>MarkyMarkdown v1.3.1</h2>
+    <h3>What's New / Improved</h3>
+    <ul>
+      <li><strong>Smarter drag-and-drop:</strong> MarkyMarkdown now detects unsupported file types earlier, so accidental drops are less confusing.</li>
+      <li><strong>Clearer "unsupported file" feedback:</strong> When you drag an unsupported file over the drop zone, the app shows a more explicit "Unsupported file type" state instead of acting like it will convert it.</li>
+      <li><strong>More helpful error messages:</strong> If a file type isn't supported, you'll now get a friendlier message with suggestions (for example: try PDF, Word, PowerPoint, Excel, HTML, or plain text).</li>
+    </ul>
+    <h3>Under the Hood</h3>
+    <ul>
+      <li><strong>Conversion reliability improvements:</strong> The app validates file types before attempting conversion, reducing failed conversions and noisy errors.</li>
+    </ul>
+  ]]></description>
   <enclosure
     url="https://github.com/abirismyname/markymarkdown/releases/download/v1.3.1/MarkyMarkdown-1.3.1.dmg"
     sparkle:version="1.3.1"
